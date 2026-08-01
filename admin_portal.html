@@ -51,10 +51,10 @@
                     </div>
                     <div class="w-2/3 pl-4">
                         <div id="student-detail" class="hidden">
-                            <div class="bg-gray-100 border p-4 rounded mb-4 flex justify-between gap-2 items-center">
+                            <!-- Sửa thông tin & Mật khẩu -->
+                            <div class="bg-gray-100 border p-4 rounded mb-2 flex justify-between gap-2 items-center">
                                 <div><input type="text" id="detail-name" class="text-lg font-bold text-purple-700 bg-white border px-2 py-1 rounded w-32"><p class="text-sm mt-1">User: <span id="detail-user"></span></p></div>
                                 <div class="flex items-center gap-2">
-                                    <!-- ĐÃ THÊM NÚT MẮT XEM MẬT KHẨU TẠI ĐÂY -->
                                     <div class="relative flex items-center">
                                         <input type="password" id="detail-pass" class="w-28 border px-2 py-1 rounded pr-7">
                                         <button onclick="togglePass('detail-pass')" class="absolute right-1 text-sm" title="Xem mật khẩu">👁️</button>
@@ -62,6 +62,13 @@
                                     <button onclick="updateStudent()" class="bg-yellow-300 px-3 py-1 font-bold rounded border border-black">Lưu</button>
                                 </div>
                             </div>
+                            <!-- Link Meet Cố định -->
+                            <div class="bg-blue-50 border border-blue-200 p-3 rounded mb-4 flex items-center gap-3">
+                                <label class="font-bold text-blue-700 whitespace-nowrap">🎥 Link Lớp (Meet/Zoom):</label>
+                                <input type="text" id="detail-meet" placeholder="Dán link vào đây..." class="w-full p-2 border rounded outline-none text-sm">
+                                <button onclick="updateStudentMeet()" class="bg-blue-300 px-4 py-2 font-bold rounded border border-black text-sm whitespace-nowrap">Ghim Link</button>
+                            </div>
+
                             <div class="flex gap-2 mb-4 bg-red-50 p-2 border rounded">
                                 <input type="text" id="track-session" placeholder="Buổi..." class="p-2 border rounded w-1/4">
                                 <input type="text" id="track-content" placeholder="Nội dung..." class="p-2 border rounded w-2/4">
@@ -79,6 +86,19 @@
                     <div class="space-y-3 flex flex-col">
                         <input type="hidden" id="edit-ass-id">
                         <select id="ass-target" class="w-full p-2 border rounded font-bold"><option value="ALL">Giao cho TẤT CẢ</option></select>
+                        
+                        <!-- NGÀY GIAO & DEADLINE -->
+                        <div class="flex gap-2">
+                            <div class="w-1/2">
+                                <label class="font-bold text-xs text-gray-600 block mb-1">📅 Ngày giao:</label>
+                                <input type="date" id="ass-assigned-date" class="w-full p-2 border rounded text-sm">
+                            </div>
+                            <div class="w-1/2">
+                                <label class="font-bold text-xs text-red-600 block mb-1">⏰ Deadline:</label>
+                                <input type="date" id="ass-deadline-date" class="w-full p-2 border rounded text-sm border-red-300">
+                            </div>
+                        </div>
+
                         <select id="ass-type" class="w-full p-2 border rounded font-bold text-blue-700">
                             <option value="READING">📖 Dạng Reading (Chia trái/phải)</option>
                             <option value="LISTENING">🎧 Dạng Listening (Chia trên/dưới)</option>
@@ -174,14 +194,12 @@
 
     <script>
         const supabaseUrl = 'https://bcxjskvyromnrrtzqafu.supabase.co'; const supabaseKey = 'sb_publishable_4kpK2eA9PWZsXr0w2GHZYQ_Vq2hzkEO';
-        let dbClient = null; let currentSelectedUser = null;
+        let dbClient = null; let currentSelectedUser = null; let globalAllStudents = [];
 
         window.addEventListener('DOMContentLoaded', () => { if (window.supabase) { dbClient = window.supabase.createClient(supabaseUrl, supabaseKey); refreshAll(); }});
         function refreshAll() { loadStudents(); loadAssignments(); loadHandouts(); loadGradingList(); loadQnA(); }
         function switchTab(id) { document.querySelectorAll('.tab-content').forEach(el => { el.classList.add('hidden'); el.classList.remove('block'); }); document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('block'); }
         function formatText(cmd, val = null) { document.execCommand(cmd, false, val); document.getElementById('grading-editor').focus(); }
-        
-        // HÀM ẨN/HIỆN MẬT KHẨU
         function togglePass(id) { const el = document.getElementById(id); el.type = el.type === 'password' ? 'text' : 'password'; }
 
         // Paste Ảnh
@@ -197,14 +215,15 @@
             }
         });
 
-        // HỌC SINH
+        // HỌC SINH & LỊCH HỌC & MEET LINK
         async function loadStudents() {
             const { data } = await dbClient.from('students').select('*').order('id', { ascending: false });
             if (data) {
+                globalAllStudents = data;
                 const list = document.getElementById('student-list'); const selAss = document.getElementById('ass-target'); const selHand = document.getElementById('hand-target'); const selErr = document.getElementById('err-target');
                 list.innerHTML = ''; selAss.innerHTML = '<option value="ALL">ALL</option>'; selHand.innerHTML = '<option value="ALL">ALL</option>'; selErr.innerHTML = '<option value="">-- Chọn HS --</option>';
                 data.forEach(s => {
-                    list.innerHTML += `<div class="flex gap-2 mb-1"><button onclick="viewStudent('${s.username}', '${s.full_name}', '${s.password}')" class="flex-grow text-left p-2 bg-gray-50 border hover:bg-pink-100">👤 ${s.full_name||s.username}</button><button onclick="delStudent('${s.username}')" class="p-2 bg-red-100 text-red-600 border">X</button></div>`;
+                    list.innerHTML += `<div class="flex gap-2 mb-1"><button onclick="viewStudent('${s.username}')" class="flex-grow text-left p-2 bg-gray-50 border hover:bg-pink-100">👤 ${s.full_name||s.username}</button><button onclick="delStudent('${s.username}')" class="p-2 bg-red-100 text-red-600 border">X</button></div>`;
                     const opt = `<option value="${s.username}">${s.full_name||s.username}</option>`;
                     selAss.innerHTML += opt; selHand.innerHTML += opt; selErr.innerHTML += opt;
                 });
@@ -214,9 +233,30 @@
             const u = document.getElementById('stu-user').value; const p = document.getElementById('stu-pass').value; const n = document.getElementById('stu-name').value;
             if(!u || !p) return alert("Thiếu TK!"); await dbClient.from('students').insert([{ username: u, password: p, full_name: n }]); loadStudents();
         }
-        async function updateStudent() { await dbClient.from('students').update({ full_name: document.getElementById('detail-name').value, password: document.getElementById('detail-pass').value }).eq('username', currentSelectedUser); alert("✅ Đã lưu!"); loadStudents(); }
+        
+        function viewStudent(u) { 
+            currentSelectedUser = u; 
+            const student = globalAllStudents.find(s => s.username === u);
+            document.getElementById('student-detail').classList.remove('hidden'); 
+            document.getElementById('detail-name').value = student.full_name||u; 
+            document.getElementById('detail-user').innerText = u; 
+            document.getElementById('detail-pass').value = student.password; 
+            document.getElementById('detail-meet').value = student.meet_link || ""; // Hiện Meet Link
+            loadLessons(u); 
+        }
+
+        async function updateStudent() { 
+            await dbClient.from('students').update({ full_name: document.getElementById('detail-name').value, password: document.getElementById('detail-pass').value }).eq('username', currentSelectedUser); 
+            alert("✅ Đã lưu!"); loadStudents(); 
+        }
+
+        async function updateStudentMeet() {
+            const link = document.getElementById('detail-meet').value.trim();
+            await dbClient.from('students').update({ meet_link: link }).eq('username', currentSelectedUser); 
+            alert("✅ Đã ghim Link Meet/Zoom cho học sinh này!"); loadStudents();
+        }
+
         async function delStudent(user) { if(confirm("XÓA học sinh?")) { await dbClient.from('students').delete().eq('username', user); loadStudents(); document.getElementById('student-detail').classList.add('hidden'); } }
-        async function viewStudent(u, n, p) { currentSelectedUser = u; document.getElementById('student-detail').classList.remove('hidden'); document.getElementById('detail-name').value = n||u; document.getElementById('detail-user').innerText = u; document.getElementById('detail-pass').value = p; loadLessons(u); }
         async function loadLessons(user) {
             const { data } = await dbClient.from('student_lessons').select('*').eq('username', user).order('id', { ascending: true });
             document.getElementById('lesson-table-body').innerHTML = (data||[]).map(l => `<tr class="excel-row"><td class="excel-cell">${l.session_date}</td><td class="excel-cell whitespace-pre-wrap">${l.content}</td><td class="excel-cell cursor-pointer ${l.payment_status==='PAID'?'text-green-700':'text-red-700'}" onclick="togglePayment(${l.id}, '${l.payment_status}')">${l.payment_status}</td><td class="excel-cell text-red-500 cursor-pointer" onclick="delLesson(${l.id})">Xóa</td></tr>`).join('');
@@ -229,7 +269,7 @@
         let allAss = [];
         async function loadAssignments() {
             const { data } = await dbClient.from('assignments').select('*').order('id', { ascending: false }); allAss = data || [];
-            document.getElementById('ass-list-container').innerHTML = allAss.map(a => `<div class="p-2 border rounded bg-gray-50 flex justify-between"><span>[${a.ass_type||'WRITING'}] ${a.title} (${a.target_student})</span> <div><button onclick="editAss(${a.id})" class="bg-yellow-200 px-2 rounded border mr-1">Sửa</button><button onclick="delAss(${a.id})" class="bg-red-200 px-2 rounded border">Xóa</button></div></div>`).join('');
+            document.getElementById('ass-list-container').innerHTML = allAss.map(a => `<div class="p-2 border rounded bg-gray-50 flex justify-between"><span>[${a.ass_type||'WRITING'}] ${a.title} (${a.target_student}) <br><small class="text-gray-500">📅 ${a.assigned_date||'--'} | ⏰ ${a.deadline_date||'--'}</small></span> <div><button onclick="editAss(${a.id})" class="bg-yellow-200 px-2 rounded border mr-1">Sửa</button><button onclick="delAss(${a.id})" class="bg-red-200 px-2 rounded border">Xóa</button></div></div>`).join('');
         }
         async function publishAss() {
             const id = document.getElementById('edit-ass-id').value;
@@ -237,6 +277,8 @@
                 target_student: document.getElementById('ass-target').value, 
                 ass_type: document.getElementById('ass-type').value, 
                 title: document.getElementById('ass-title').value, 
+                assigned_date: document.getElementById('ass-assigned-date').value, 
+                deadline_date: document.getElementById('ass-deadline-date').value, 
                 image_url: document.getElementById('ass-img-base64').value, 
                 audio_url: document.getElementById('ass-audio').value, 
                 content: document.getElementById('ass-content').value, 
@@ -249,7 +291,9 @@
         }
         function editAss(id) {
             const a = allAss.find(x => x.id === id); if(!a) return;
-            document.getElementById('edit-ass-id').value = a.id; document.getElementById('ass-target').value = a.target_student||'ALL'; document.getElementById('ass-type').value = a.ass_type||'WRITING'; document.getElementById('ass-title').value = a.title; document.getElementById('ass-audio').value = a.audio_url||''; document.getElementById('ass-content').value = a.content||''; 
+            document.getElementById('edit-ass-id').value = a.id; document.getElementById('ass-target').value = a.target_student||'ALL'; document.getElementById('ass-type').value = a.ass_type||'WRITING'; document.getElementById('ass-title').value = a.title; 
+            document.getElementById('ass-assigned-date').value = a.assigned_date||''; document.getElementById('ass-deadline-date').value = a.deadline_date||'';
+            document.getElementById('ass-audio').value = a.audio_url||''; document.getElementById('ass-content').value = a.content||''; 
             document.getElementById('ass-question').value = a.question_text||'';
             document.getElementById('ass-img-base64').value = a.image_url||'';
             if(a.image_url){ document.getElementById('img-preview').src = a.image_url; document.getElementById('img-preview').classList.remove('hidden'); }

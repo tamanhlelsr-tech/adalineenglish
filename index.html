@@ -38,9 +38,18 @@
     </div>
 
     <div id="dashboard-page" class="hidden-page w-full max-w-7xl">
-        <div class="mb-4 torn-paper p-4 bg-purple-50 flex justify-between items-center">
+        <!-- HEADER & MEET BANNER -->
+        <div class="mb-4 torn-paper p-4 bg-white flex flex-col md:flex-row justify-between items-center gap-4">
             <h2 id="welcome-text" class="text-2xl font-bold text-purple-700">Welcome!</h2>
-            <button onclick="realLogin()" class="btn-90s bg-blue-100 px-4 py-1 text-sm font-bold">🔄 Tải lại dữ liệu</button>
+            
+            <!-- NÚT LINK MEET GHIM CỐ ĐỊNH -->
+            <div id="meet-banner" class="hidden flex-grow flex items-center justify-end">
+                <a id="meet-link-btn" href="#" target="_blank" class="bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 text-white font-bold py-2 px-6 rounded-full shadow-md flex items-center gap-2 transform transition hover:scale-105">
+                    <span class="text-xl">🎥</span> Vào Phòng Học Ngay
+                </a>
+            </div>
+
+            <button onclick="realLogin()" class="btn-90s bg-gray-100 px-4 py-1 text-sm font-bold shadow-sm whitespace-nowrap">🔄 Tải lại dữ liệu</button>
         </div>
 
         <div class="flex flex-wrap gap-2 mb-4">
@@ -59,10 +68,10 @@
                 <div class="overflow-x-auto"><table class="min-w-full text-center border-collapse text-sm"><thead class="excel-header"><tr><th class="excel-cell w-2/12">BUỔI</th><th class="excel-cell w-8/12">NỘI DUNG</th><th class="excel-cell w-2/12">STATUS</th></tr></thead><tbody id="student-tracker-body"></tbody></table></div>
             </div>
 
-            <!-- TAB 2: ASSIGNMENT (Danh sách + Chi tiết) -->
+            <!-- TAB 2: ASSIGNMENT (Hiển thị Ngày Giao & Deadline) -->
             <div id="tab-assignments" class="tab-content hidden">
                 
-                <!-- BƯỚC 1: DANH SÁCH BÀI TẬP -->
+                <!-- DANH SÁCH BÀI TẬP -->
                 <div id="ass-list-view">
                     <h3 class="text-2xl font-bold text-blue-600 mb-4">📝 Danh sách Bài Tập được giao</h3>
                     <div id="ass-card-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -70,7 +79,7 @@
                     </div>
                 </div>
 
-                <!-- BƯỚC 2: GIAO DIỆN LÀM BÀI CHI TIẾT (Bị ẩn ban đầu) -->
+                <!-- CHI TIẾT LÀM BÀI -->
                 <div id="ass-detail-view" class="hidden">
                     <div class="flex justify-between items-center mb-4 border-b pb-2">
                         <div>
@@ -81,7 +90,6 @@
                     </div>
 
                     <div id="ass-layout" class="flex flex-col gap-4">
-                        <!-- BÊN TRÁI: ĐỀ BÀI -->
                         <div id="ass-material" class="w-full bg-gray-50 border rounded flex flex-col h-[650px] shadow-inner">
                             <div class="bg-gray-200 border-b p-2 flex flex-wrap gap-2 items-center">
                                 <span class="text-xs font-bold text-gray-600 mr-2">✏️ Nháp trực tiếp:</span>
@@ -97,13 +105,10 @@
                                     <select onchange="document.getElementById('audio-player').playbackRate = parseFloat(this.value)" class="p-1 border rounded text-xs font-bold"><option value="1">1.0x</option><option value="1.5">1.5x</option></select>
                                 </div>
                                 <img id="display-image" src="" class="hidden w-full h-auto mb-4 border rounded shadow-sm">
-                                <div id="display-content" contenteditable="true" spellcheck="false" class="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed outline-none">
-                                    Nội dung đề bài...
-                                </div>
+                                <div id="display-content" contenteditable="true" spellcheck="false" class="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed outline-none">Nội dung đề bài...</div>
                             </div>
                         </div>
                         
-                        <!-- BÊN PHẢI: KHU VỰC LÀM BÀI -->
                         <div id="ass-workspace" class="w-full flex flex-col gap-2 h-[650px]">
                             <input type="hidden" id="current-ass-id">
                             <input type="hidden" id="cheat-flag" value="false">
@@ -160,40 +165,26 @@
 
     <script>
         const supabaseUrl = 'https://bcxjskvyromnrrtzqafu.supabase.co'; const supabaseKey = 'sb_publishable_4kpK2eA9PWZsXr0w2GHZYQ_Vq2hzkEO';
-        let dbClient = null; let loggedInUser = null;
-        let globalAssignments = []; // Chứa danh sách bài tập đã load
+        let dbClient = null; let loggedInUser = null; let globalAssignments = []; 
 
         window.addEventListener('DOMContentLoaded', () => { if (window.supabase) dbClient = window.supabase.createClient(supabaseUrl, supabaseKey); });
         
         function switchTab(id) { 
             document.querySelectorAll('.tab-content').forEach(el => { el.classList.add('hidden'); el.classList.remove('block'); }); 
             document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('block'); 
-            // Nếu bấm vào tab assignment, luôn hiện list trước
-            if(id === 'tab-assignments') {
-                document.getElementById('ass-detail-view').classList.add('hidden');
-                document.getElementById('ass-list-view').classList.remove('hidden');
-            }
+            if(id === 'tab-assignments') { document.getElementById('ass-detail-view').classList.add('hidden'); document.getElementById('ass-list-view').classList.remove('hidden'); }
         }
         function togglePass(id) { const el = document.getElementById(id); el.type = el.type === 'password' ? 'text' : 'password'; }
+        function formatPassage(cmd, val = null) { document.execCommand(cmd, false, val); document.getElementById('display-content').focus(); }
 
-        // --- CÔNG CỤ NHÁP TRÊN ĐỀ BÀI ---
-        function formatPassage(cmd, val = null) {
-            document.execCommand(cmd, false, val);
-            document.getElementById('display-content').focus();
-        }
-
-        // --- FILE UPLOAD & ANTI CHEAT ---
+        // FILE & ANTI CHEAT & AUTOSAVE
         document.getElementById('upload-file').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if(file.size > 2 * 1024 * 1024) { alert("File quá lớn! Vui lòng upload file dưới 2MB."); this.value = ""; return; }
+            const file = e.target.files[0]; if(file.size > 2*1024*1024) { alert("File quá lớn!"); this.value = ""; return; }
             const reader = new FileReader(); reader.onload = function(evt) { document.getElementById('upload-file-base64').value = evt.target.result; }; reader.readAsDataURL(file);
         });
-
         document.getElementById('answer-box').addEventListener('paste', function(e) {
-            const wordCount = ((e.clipboardData || window.clipboardData).getData('text')).trim().split(/\s+/).length;
-            if(wordCount > 30) { alert("🚨 HỆ THỐNG GHI NHẬN GIAN LẬN COPY/PASTE QUÁ DÀI!"); document.getElementById('cheat-flag').value = "true"; document.getElementById('answer-box').classList.add('bg-red-50'); }
+            if(((e.clipboardData || window.clipboardData).getData('text')).trim().split(/\s+/).length > 30) { alert("🚨 GIAN LẬN: COPY PASTE!"); document.getElementById('cheat-flag').value = "true"; document.getElementById('answer-box').classList.add('bg-red-50'); }
         });
-
         function autoSaveWork() {
             const assId = document.getElementById('current-ass-id').value; if(!assId) return;
             localStorage.setItem(`draft_${loggedInUser}_${assId}`, document.getElementById('answer-box').value);
@@ -201,7 +192,7 @@
             clearTimeout(window.saveTimeout); window.saveTimeout = setTimeout(() => status.classList.add('hidden'), 2000);
         }
 
-        // --- LOGIN & LOAD ---
+        // LOGIN (HIỂN THỊ LINK MEET)
         async function realLogin() {
             let u = loggedInUser || document.getElementById('username').value.trim(); let p = document.getElementById('password').value.trim();
             if(loggedInUser) p = (await dbClient.from('students').select('password').eq('username', u).single()).data.password;
@@ -209,6 +200,13 @@
             if (data && data.length > 0) {
                 loggedInUser = u; document.getElementById('login-page').style.display = 'none'; document.getElementById('dashboard-page').classList.remove('hidden-page');
                 document.getElementById('welcome-text').innerText = "Hello, " + (data[0].full_name || u) + "!";
+                
+                // Show Meet Link
+                const meetBanner = document.getElementById('meet-banner');
+                const meetBtn = document.getElementById('meet-link-btn');
+                if(data[0].meet_link) { meetBtn.href = data[0].meet_link; meetBanner.classList.remove('hidden'); } 
+                else { meetBanner.classList.add('hidden'); }
+
                 loadTracker(u); loadHandouts(u); loadAssignmentList(u); loadHistory(u); loadQnA(u); loadErrorLog(u);
             } else document.getElementById('login-error').classList.remove('hidden');
         }
@@ -221,51 +219,42 @@
             document.getElementById('history-list').innerHTML = (subData||[]).map(s => `<div class="p-6 bg-white border-2 rounded shadow-sm mb-4"><div class="flex justify-between border-b pb-2 mb-2"><h4 class="font-bold text-blue-700">${assMap[s.assignment_id]||'Bài tập'}</h4>${s.score?`<span class="bg-green-100 px-3 rounded-full text-green-700 font-bold">Điểm: ${s.score}</span>`:`<span class="bg-yellow-100 px-3 rounded-full text-yellow-700">⏳ Chờ chấm</span>`}</div><div class="p-3 bg-gray-50 border text-sm whitespace-pre-wrap">${s.content}</div>${s.feedback_content?`<div class="mt-4 pt-2 border-t"><h5 class="text-xs font-bold text-green-700 mb-1">Feedback:</h5><div class="p-3 bg-green-50 border text-sm">${s.feedback_content}</div></div>`:''}</div>`).join('') || '<p>Chưa có bài nộp.</p>';
         }
 
-        // --- BÀI TẬP: BƯỚC 1 - LOAD DANH SÁCH ---
+        // BÀI TẬP: LIST (ĐÃ HIỂN THỊ DATE)
         async function loadAssignmentList(user) {
-            // Lấy danh sách bài tập được giao
             const { data: assignments } = await dbClient.from('assignments').select('*').in('target_student', ['ALL', user]).order('id', { ascending: false });
             globalAssignments = assignments || [];
-            
-            // Lấy danh sách bài ĐÃ NỘP để hiển thị trạng thái
             const { data: subs } = await dbClient.from('submissions').select('assignment_id').eq('username', user);
             const submittedIds = (subs || []).map(s => s.assignment_id);
 
             const container = document.getElementById('ass-card-container');
-            if(globalAssignments.length === 0) {
-                container.innerHTML = `<p class="col-span-3 text-gray-500 italic border p-4 rounded bg-gray-50">Không có bài tập nào được giao.</p>`;
-                return;
-            }
+            if(globalAssignments.length === 0) { container.innerHTML = `<p class="col-span-3 text-gray-500 italic border p-4 rounded bg-gray-50">Không có bài tập nào.</p>`; return; }
 
             container.innerHTML = globalAssignments.map(ass => {
                 const isDone = submittedIds.includes(ass.id);
                 const typeIcon = ass.ass_type === 'READING' ? '📖' : (ass.ass_type === 'LISTENING' ? '🎧' : '✍️');
-                const statusBadge = isDone 
-                    ? `<span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full border border-green-300 font-bold">✅ Đã nộp</span>`
-                    : `<span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full border border-red-300 font-bold">⚠️ Chưa làm</span>`;
+                const statusBadge = isDone ? `<span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full border border-green-300 font-bold">✅ Đã nộp</span>` : `<span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full border border-red-300 font-bold">⚠️ Chưa làm</span>`;
                 
+                // Format Ngày giao & Deadline
+                const startStr = ass.assigned_date ? `📅 Giao: ${ass.assigned_date}` : '';
+                const deadStr = ass.deadline_date ? `⏰ Deadline: ${ass.deadline_date}` : '';
+                const dateHtml = (startStr || deadStr) ? `<div class="mt-2 text-xs font-bold text-red-600 bg-red-50 p-1 rounded inline-block border border-red-200">${startStr} &nbsp; ${deadStr}</div>` : '';
+
                 return `
                 <div class="border-2 border-blue-200 rounded-lg p-5 bg-white shadow-sm flex flex-col justify-between hover:shadow-md transition">
-                    <div>
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="text-2xl">${typeIcon}</span>
-                            ${statusBadge}
-                        </div>
-                        <h4 class="font-bold text-gray-800 text-lg mb-2 leading-tight">${ass.title}</h4>
-                        <p class="text-sm text-gray-500 mb-4">⏱ Thời gian: ${ass.timer_minutes} phút</p>
+                    <div class="mb-4">
+                        <div class="flex justify-between items-start mb-2"><span class="text-2xl">${typeIcon}</span>${statusBadge}</div>
+                        <h4 class="font-bold text-gray-800 text-lg mb-1 leading-tight">${ass.title}</h4>
+                        <p class="text-sm text-gray-500">⏱ ${ass.timer_minutes} phút</p>
+                        ${dateHtml}
                     </div>
                     <button onclick="startAssignment(${ass.id})" class="btn-90s bg-blue-100 w-full py-2 text-blue-800 text-sm">Vào Làm Bài ➔</button>
                 </div>`;
             }).join('');
         }
 
-        // --- BÀI TẬP: BƯỚC 2 - VÀO LÀM BÀI CHI TIẾT ---
         function startAssignment(assId) {
-            const ass = globalAssignments.find(a => a.id === assId);
-            if(!ass) return;
-
-            document.getElementById('ass-list-view').classList.add('hidden');
-            document.getElementById('ass-detail-view').classList.remove('hidden');
+            const ass = globalAssignments.find(a => a.id === assId); if(!ass) return;
+            document.getElementById('ass-list-view').classList.add('hidden'); document.getElementById('ass-detail-view').classList.remove('hidden');
 
             const type = ass.ass_type || 'WRITING';
             document.getElementById('current-ass-id').value = ass.id; 
@@ -273,96 +262,51 @@
             document.getElementById('display-content').innerText = ass.content || "Không có đề bài (Text)."; 
             document.getElementById('display-timer').innerText = ass.timer_minutes + ":00";
             
-            // Hiển thị Câu hỏi bên phải
             const qEl = document.getElementById('display-questions');
             if(ass.question_text) { qEl.innerText = ass.question_text; qEl.classList.remove('hidden'); } else { qEl.classList.add('hidden'); qEl.innerText = ""; }
 
-            // Khôi phục nháp
             document.getElementById('answer-box').value = localStorage.getItem(`draft_${loggedInUser}_${ass.id}`) || "";
-            document.getElementById('answer-box').classList.remove('bg-red-50');
-            document.getElementById('cheat-flag').value = "false";
+            document.getElementById('answer-box').classList.remove('bg-red-50'); document.getElementById('cheat-flag').value = "false";
 
-            // Đổi Layout
             const layout = document.getElementById('ass-layout'); const material = document.getElementById('ass-material'); const workspace = document.getElementById('ass-workspace');
-            if (type === 'READING') { 
-                layout.className = "flex flex-col md:flex-row gap-4"; 
-                material.className = "w-full md:w-1/2 bg-gray-50 border rounded flex flex-col h-[650px] shadow-inner"; 
-                workspace.className = "w-full md:w-1/2 flex flex-col gap-2 h-[650px]"; 
-            } 
-            else if (type === 'LISTENING') { 
-                layout.className = "flex flex-col gap-4"; 
-                material.className = "w-full bg-gray-50 border rounded flex flex-col max-h-[400px]"; 
-                workspace.className = "w-full flex flex-col gap-2 h-[500px]"; 
-            } 
-            else { 
-                layout.className = "flex flex-col md:flex-row gap-4"; 
-                material.className = "w-full md:w-1/2 bg-gray-50 border rounded flex flex-col h-[650px] shadow-inner"; 
-                workspace.className = "w-full md:w-1/2 flex flex-col gap-2 h-[650px]"; 
-            }
+            if (type === 'READING') { layout.className = "flex flex-col md:flex-row gap-4"; material.className = "w-full md:w-1/2 bg-gray-50 border rounded flex flex-col h-[650px] shadow-inner"; workspace.className = "w-full md:w-1/2 flex flex-col gap-2 h-[650px]"; } 
+            else if (type === 'LISTENING') { layout.className = "flex flex-col gap-4"; material.className = "w-full bg-gray-50 border rounded flex flex-col max-h-[400px]"; workspace.className = "w-full flex flex-col gap-2 h-[500px]"; } 
+            else { layout.className = "flex flex-col md:flex-row gap-4"; material.className = "w-full md:w-1/2 bg-gray-50 border rounded flex flex-col h-[650px] shadow-inner"; workspace.className = "w-full md:w-1/2 flex flex-col gap-2 h-[650px]"; }
 
-            // Audio & Image
             if (ass.audio_url) { document.getElementById('audio-container').classList.remove('hidden'); document.getElementById('audio-source').src = ass.audio_url; document.getElementById('audio-player').load(); } else document.getElementById('audio-container').classList.add('hidden');
             if (ass.image_url) { document.getElementById('display-image').src = ass.image_url; document.getElementById('display-image').classList.remove('hidden'); } else document.getElementById('display-image').classList.add('hidden');
         }
 
-        // Quay lại danh sách
-        function backToAssList() {
-            document.getElementById('ass-detail-view').classList.add('hidden');
-            document.getElementById('ass-list-view').classList.remove('hidden');
-            // Dừng audio nếu đang phát
-            const audio = document.getElementById('audio-player');
-            if(audio) audio.pause();
-        }
+        function backToAssList() { document.getElementById('ass-detail-view').classList.add('hidden'); document.getElementById('ass-list-view').classList.remove('hidden'); const audio = document.getElementById('audio-player'); if(audio) audio.pause(); }
 
         async function submitWork() {
             const assId = document.getElementById('current-ass-id').value; let content = document.getElementById('answer-box').value.trim();
             const fileData = document.getElementById('upload-file-base64').value; const isCheated = document.getElementById('cheat-flag').value === "true";
-            if (!assId) return alert("Lỗi ID bài tập!"); if (!content && !fileData) return alert("Chưa gõ bài hoặc up file!");
+            if (!assId) return alert("Lỗi ID!"); if (!content && !fileData) return alert("Chưa gõ bài hoặc up file!");
 
             document.getElementById('btn-submit').innerText = "Đang nộp..."; document.getElementById('btn-submit').disabled = true;
             if (isCheated) content = "[🚨 GIAN LẬN: COPY PASTE QUÁ DÀI]\n\n" + content;
 
             const { error } = await dbClient.from('submissions').insert([{ username: loggedInUser, assignment_id: parseInt(assId), content: content, file_data: fileData, is_cheated: isCheated }]);
             if (!error) {
-                alert("✅ Đã nộp bài thành công!"); 
-                localStorage.removeItem(`draft_${loggedInUser}_${assId}`);
+                alert("✅ Đã nộp bài thành công!"); localStorage.removeItem(`draft_${loggedInUser}_${assId}`);
                 document.getElementById('answer-box').value = ""; document.getElementById('upload-file').value = ""; document.getElementById('upload-file-base64').value = "";
-                
-                // Load lại danh sách để cập nhật trạng thái "Đã nộp"
-                loadAssignmentList(loggedInUser);
-                loadHistory(loggedInUser);
-                backToAssList();
-            } else {
-                alert("Lỗi nộp bài: " + error.message);
-            }
+                loadAssignmentList(loggedInUser); loadHistory(loggedInUser); backToAssList();
+            } else { alert("Lỗi nộp bài: " + error.message); }
             document.getElementById('btn-submit').innerText = "Nộp Bài 📤"; document.getElementById('btn-submit').disabled = false;
         }
 
-        // --- Q&A ---
-        async function loadQnA(user) {
-            const { data } = await dbClient.from('qna').select('*').eq('username', user).order('created_at', { ascending: false });
-            document.getElementById('qna-student-list').innerHTML = (data||[]).map(q => `<div class="p-3 border rounded ${q.answer?'bg-green-50 border-green-300':'bg-gray-50'}"><p class="font-bold text-orange-600">Bạn hỏi:</p><p class="italic text-sm mb-2">${q.question}</p>${q.answer?`<p class="font-bold text-green-700">GV Trả lời:</p><p class="text-sm">${q.answer}</p>`:`<p class="text-xs text-gray-400">⏳ Đang chờ giáo viên phản hồi...</p>`}</div>`).join('');
-        }
-        async function askQuestion() {
-            const q = document.getElementById('qna-question').value.trim(); if(!q) return;
-            await dbClient.from('qna').insert([{ username: loggedInUser, question: q }]); document.getElementById('qna-question').value = ''; loadQnA(loggedInUser); alert("✅ Đã gửi!");
-        }
-
-        // --- ERROR LOG ---
+        // Q&A & ERROR LOG
+        async function loadQnA(user) { const { data } = await dbClient.from('qna').select('*').eq('username', user).order('created_at', { ascending: false }); document.getElementById('qna-student-list').innerHTML = (data||[]).map(q => `<div class="p-3 border rounded ${q.answer?'bg-green-50 border-green-300':'bg-gray-50'}"><p class="font-bold text-orange-600">Bạn hỏi:</p><p class="italic text-sm mb-2">${q.question}</p>${q.answer?`<p class="font-bold text-green-700">GV Trả lời:</p><p class="text-sm">${q.answer}</p>`:`<p class="text-xs text-gray-400">⏳ Đang chờ giáo viên phản hồi...</p>`}</div>`).join(''); }
+        async function askQuestion() { const q = document.getElementById('qna-question').value.trim(); if(!q) return; await dbClient.from('qna').insert([{ username: loggedInUser, question: q }]); document.getElementById('qna-question').value = ''; loadQnA(loggedInUser); alert("✅ Đã gửi!"); }
+        
         async function loadErrorLog(user) {
-            const { data } = await dbClient.from('error_logs').select('*').eq('username', user);
-            const dataMap = {}; (data||[]).forEach(d => dataMap[d.row_index] = d);
-            
+            const { data } = await dbClient.from('error_logs').select('*').eq('username', user); const dataMap = {}; (data||[]).forEach(d => dataMap[d.row_index] = d);
             let html = '';
             for(let i=1; i<=100; i++) {
                 const row = dataMap[i] || { question:'', given_answer:'', wrong_choice:'', correct_answer:'' };
-                html += `<tr class="border-b"><td class="p-2 border-r text-center font-bold text-gray-500">${i}</td>
-                <td class="p-1 border-r"><textarea data-row="${i}" data-col="question" class="err-input w-full bg-transparent outline-none resize-none p-1" rows="2">${row.question}</textarea></td>
-                <td class="p-1 border-r"><textarea data-row="${i}" data-col="given_answer" class="err-input w-full bg-transparent outline-none resize-none p-1" rows="2">${row.given_answer}</textarea></td>
-                <td class="p-1 border-r"><textarea data-row="${i}" data-col="wrong_choice" class="err-input w-full text-red-500 font-bold outline-none resize-none p-1" rows="2">${row.wrong_choice}</textarea></td>
-                <td class="p-1"><textarea data-row="${i}" data-col="correct_answer" class="err-input w-full text-green-600 font-bold outline-none resize-none p-1" rows="2">${row.correct_answer}</textarea></td></tr>`;
-            }
-            document.getElementById('error-log-body').innerHTML = html;
+                html += `<tr class="border-b"><td class="p-2 border-r text-center font-bold text-gray-500">${i}</td><td class="p-1 border-r"><textarea data-row="${i}" data-col="question" class="err-input w-full bg-transparent outline-none resize-none p-1" rows="2">${row.question}</textarea></td><td class="p-1 border-r"><textarea data-row="${i}" data-col="given_answer" class="err-input w-full bg-transparent outline-none resize-none p-1" rows="2">${row.given_answer}</textarea></td><td class="p-1 border-r"><textarea data-row="${i}" data-col="wrong_choice" class="err-input w-full text-red-500 font-bold outline-none resize-none p-1" rows="2">${row.wrong_choice}</textarea></td><td class="p-1"><textarea data-row="${i}" data-col="correct_answer" class="err-input w-full text-green-600 font-bold outline-none resize-none p-1" rows="2">${row.correct_answer}</textarea></td></tr>`;
+            } document.getElementById('error-log-body').innerHTML = html;
         }
 
         document.getElementById('error-table').addEventListener('change', async function(e) {
