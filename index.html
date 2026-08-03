@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Portal</title>
+    <title>Student Portal - IELTS Test Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #FFD1DC; background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 20px 20px; }
-        .torn-paper { background-color: #fff; position: relative; box-shadow: 4px 4px 0px rgba(0,0,0,0.1); border: 2px dashed #B39EB5; border-radius: 5px; }
+        body { font-family: 'Inter', sans-serif; background-color: #FFD1DC; background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 20px 20px; transition: background-color 0.3s; }
+        .torn-paper { background-color: #fff; position: relative; box-shadow: 4px 4px 0px rgba(0,0,0,0.1); border: 2px dashed #B39EB5; border-radius: 5px; transition: all 0.3s; }
         .btn-90s { background-color: #FDFD96; border: 2px solid #000; box-shadow: 3px 3px 0px #000; font-weight: 600; cursor: pointer; transition: all 0.1s; }
         .btn-90s:active { box-shadow: 0px 0px 0px #000; transform: translate(3px, 3px); }
+        .btn-90s:disabled { background-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; box-shadow: none; border-color: #d1d5db; }
         .hidden-page { display: none; }
         .excel-header { background-color: #D97A73; color: white; border: 1px solid #000; }
         .excel-row { background-color: #FAD4D4; border: 1px solid #000; }
@@ -20,10 +21,23 @@
         ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        
+        /* HIỆU ỨNG NHẤP NHÁY ĐỒNG HỒ */
+        @keyframes flashRed { 0% { background-color: #fee2e2; color: #b91c1c; } 50% { background-color: #b91c1c; color: white; } 100% { background-color: #fee2e2; color: #b91c1c; } }
+        .timer-warning { animation: flashRed 1s infinite; border-color: #b91c1c; }
+        
+        /* CÁC THEME ĐỌC BÀI */
+        .theme-standard { background-color: #f9fafb; color: #1f2937; }
+        .theme-reading { background-color: #fef3c7; color: #451a03; }
+        .theme-dark { background-color: #1f2937; color: #e5e7eb; border-color: #374151; }
+        
+        /* KHÓA TUA AUDIO */
+        audio.no-scrub::-webkit-media-controls-timeline { display: none; }
     </style>
 </head>
-<body class="p-4 md:p-10 flex justify-center min-h-screen text-gray-800">
+<body class="p-4 md:p-10 flex justify-center min-h-screen text-gray-800" id="main-body">
 
+    <!-- LOGIN PAGE -->
     <div id="login-page" class="w-full max-w-md mt-20">
         <div class="torn-paper p-8">
             <h1 class="text-3xl text-center text-pink-500 font-bold mb-6">Student Login</h1>
@@ -37,21 +51,17 @@
         </div>
     </div>
 
+    <!-- DASHBOARD -->
     <div id="dashboard-page" class="hidden-page w-full max-w-7xl">
-        <!-- HEADER & MEET BANNER -->
         <div class="mb-4 torn-paper p-4 bg-white flex flex-col md:flex-row justify-between items-center gap-4">
             <h2 id="welcome-text" class="text-2xl font-bold text-purple-700">Welcome!</h2>
-            
             <div id="meet-banner" class="hidden flex-grow flex items-center justify-end">
-                <a id="meet-link-btn" href="#" target="_blank" class="bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 text-white font-bold py-2 px-6 rounded-full shadow-md flex items-center gap-2 transform transition hover:scale-105">
-                    <span class="text-xl">🎥</span> Vào Phòng Học Ngay
-                </a>
+                <a id="meet-link-btn" href="#" target="_blank" class="bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 text-white font-bold py-2 px-6 rounded-full shadow-md flex items-center gap-2 transform transition hover:scale-105"><span class="text-xl">🎥</span> Vào Phòng Học Ngay</a>
             </div>
-
             <button onclick="realLogin()" class="btn-90s bg-gray-100 px-4 py-1 text-sm font-bold shadow-sm whitespace-nowrap">🔄 Tải lại dữ liệu</button>
         </div>
 
-        <div class="flex flex-wrap gap-2 mb-4">
+        <div class="flex flex-wrap gap-2 mb-4" id="main-tabs">
             <button onclick="switchTab('tab-tracker')" class="btn-90s bg-[#FFD1DC] px-4 py-2 rounded-t-lg">📅 Lịch Học</button>
             <button onclick="switchTab('tab-assignments')" class="btn-90s bg-[#AEC6CF] px-4 py-2 rounded-t-lg">📝 Làm Bài</button>
             <button onclick="switchTab('tab-history')" class="btn-90s bg-[#E2F0CB] px-4 py-2 rounded-t-lg">🗂️ Lịch Sử</button>
@@ -60,171 +70,150 @@
             <button onclick="switchTab('tab-handouts')" class="btn-90s bg-[#CBAACB] px-4 py-2 rounded-t-lg">📚 Tài Liệu</button>
         </div>
 
-        <div class="torn-paper p-6 bg-white min-h-[500px]">
+        <div class="torn-paper p-6 bg-white min-h-[500px]" id="main-container">
             
             <!-- TAB 1: TRACKER -->
             <div id="tab-tracker" class="tab-content block">
                 <div class="overflow-x-auto"><table class="min-w-full text-center border-collapse text-sm"><thead class="excel-header"><tr><th class="excel-cell w-2/12">BUỔI</th><th class="excel-cell w-8/12">NỘI DUNG</th><th class="excel-cell w-2/12">STATUS</th></tr></thead><tbody id="student-tracker-body"></tbody></table></div>
             </div>
 
-            <!-- TAB 2: ASSIGNMENT -->
+            <!-- TAB 2: ASSIGNMENT (GIAO DIỆN THI IELTS) -->
             <div id="tab-assignments" class="tab-content hidden">
                 <div id="ass-list-view">
                     <h3 class="text-2xl font-bold text-blue-600 mb-4">📝 Danh sách Bài Tập được giao</h3>
-                    <div id="ass-card-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <p class="text-gray-500 italic">Đang tải danh sách bài tập...</p>
-                    </div>
+                    <div id="ass-card-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"><p class="text-gray-500 italic">Đang tải danh sách bài tập...</p></div>
                 </div>
 
-                <div id="ass-detail-view" class="hidden">
-                    <div class="flex justify-between items-center mb-4 border-b pb-2">
-                        <div><button onclick="backToAssList()" class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm font-bold mr-2 hover:bg-gray-300">⬅ Quay lại</button><span id="display-title" class="text-xl font-bold text-blue-700">Tiêu đề bài tập</span></div>
-                        <div class="font-bold bg-red-100 text-red-600 px-4 py-1 rounded border">⏱ <span id="display-timer">00:00</span></div>
+                <div id="ass-detail-view" class="hidden relative pb-16">
+                    <!-- HEADER CỦA BÀI THI -->
+                    <div class="flex justify-between items-center mb-4 border-b pb-2 sticky top-0 bg-white z-10 pt-2" id="exam-header">
+                        <div class="flex items-center gap-3">
+                            <button onclick="backToAssList()" id="btn-back" class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm font-bold hover:bg-gray-300">⬅ Quay lại</button>
+                            <span id="display-title" class="text-xl font-bold text-blue-700 hidden md:inline">Tiêu đề bài tập</span>
+                        </div>
+                        
+                        <!-- IELTS SETTINGS TÍCH HỢP -->
+                        <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded border text-xs">
+                                <label class="font-bold">A<span class="text-[10px]">A</span></label>
+                                <select onchange="changeFontSize(this.value)" class="bg-transparent outline-none cursor-pointer"><option value="text-sm">Nhỏ</option><option value="text-base" selected>Vừa</option><option value="text-lg">Lớn</option></select>
+                                <label class="font-bold ml-2">Màu:</label>
+                                <select onchange="changeTheme(this.value)" class="bg-transparent outline-none cursor-pointer"><option value="theme-standard" selected>Chuẩn</option><option value="theme-reading">Sách cũ</option><option value="theme-dark">Tối (Dark)</option></select>
+                            </div>
+                            
+                            <!-- ĐỒNG HỒ ĐẾM NGƯỢC THỰC -->
+                            <div id="display-timer-box" class="font-bold bg-green-100 text-green-700 px-4 py-2 rounded border border-green-300 text-lg flex items-center gap-2">
+                                ⏱ <span id="display-timer">00:00</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div id="ass-layout" class="flex flex-col gap-4">
-                        <div id="ass-material" class="w-full bg-gray-50 border rounded flex flex-col h-[650px] shadow-inner">
-                            <div class="bg-gray-200 border-b p-2 flex flex-wrap gap-2 items-center">
-                                <span class="text-xs font-bold text-gray-600 mr-2">✏️ Nháp trực tiếp:</span>
+                        <div id="ass-material" class="w-full bg-gray-50 border rounded flex flex-col h-[600px] shadow-inner theme-standard transition-colors">
+                            <div class="bg-gray-200 border-b p-2 flex flex-wrap gap-2 items-center text-black">
+                                <span class="text-xs font-bold text-gray-600 mr-2">✏️ Nháp:</span>
                                 <button onclick="formatPassage('hiliteColor', 'yellow')" class="px-2 py-1 bg-yellow-200 text-yellow-800 border border-yellow-400 font-bold text-xs rounded hover:bg-yellow-300">⭐ Highlight</button>
                                 <button onclick="formatPassage('underline')" class="px-2 py-1 bg-white border border-gray-400 font-bold text-xs rounded underline hover:bg-gray-100">Underline</button>
                                 <button onclick="formatPassage('strikeThrough')" class="px-2 py-1 bg-white border border-gray-400 font-bold text-xs rounded line-through hover:bg-gray-100">Gạch bỏ</button>
-                                <button onclick="formatPassage('foreColor', 'black'); formatPassage('hiliteColor', 'transparent'); formatPassage('underline', false); formatPassage('strikeThrough', false)" class="px-2 py-1 bg-gray-300 border border-gray-400 text-xs rounded hover:bg-gray-400">Tẩy Format</button>
+                                <button onclick="formatPassage('foreColor', 'black'); formatPassage('hiliteColor', 'transparent'); formatPassage('underline', false); formatPassage('strikeThrough', false)" class="px-2 py-1 bg-gray-300 border border-gray-400 text-xs rounded hover:bg-gray-400">Tẩy</button>
                             </div>
-
-                            <div class="p-4 overflow-y-auto flex-grow bg-white">
-                                <div id="audio-container" class="bg-blue-100 p-3 rounded mb-4 flex items-center gap-2 hidden">
-                                    <audio id="audio-player" controls class="flex-grow h-8"><source id="audio-source" src=""></audio>
-                                    <select onchange="document.getElementById('audio-player').playbackRate = parseFloat(this.value)" class="p-1 border rounded text-xs font-bold"><option value="1">1.0x</option><option value="1.5">1.5x</option></select>
+                            <div class="p-4 overflow-y-auto flex-grow">
+                                <div id="audio-container" class="bg-blue-100 p-3 rounded mb-4 flex items-center gap-2 hidden text-black">
+                                    <audio id="audio-player" controls class="flex-grow h-8 no-scrub" controlsList="nodownload noplaybackrate"><source id="audio-source" src=""></audio>
+                                    <span class="text-xs font-bold text-red-500 italic">*Audio chỉ được nghe 1 lần</span>
                                 </div>
                                 <img id="display-image" src="" class="hidden w-full h-auto mb-4 border rounded shadow-sm">
-                                <div id="display-content" contenteditable="true" spellcheck="false" class="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed outline-none">Nội dung đề bài...</div>
+                                <div id="display-content" contenteditable="true" spellcheck="false" class="whitespace-pre-wrap text-base leading-relaxed outline-none transition-all">Nội dung đề bài...</div>
                             </div>
                         </div>
                         
-                        <div id="ass-workspace" class="w-full flex flex-col gap-2 h-[650px]">
+                        <div id="ass-workspace" class="w-full flex flex-col gap-2 h-[600px]">
                             <input type="hidden" id="current-ass-id">
                             <input type="hidden" id="cheat-flag" value="false">
                             <div id="display-questions" class="hidden p-4 bg-pink-50 border border-pink-200 rounded text-sm whitespace-pre-wrap font-medium text-gray-800 max-h-[250px] overflow-y-auto mb-1 shadow-inner shrink-0"></div>
                             
                             <div class="flex justify-between text-xs font-bold text-gray-500 px-1 mt-1">
-                                <span>Gõ bài trực tiếp vào đây (Tự động lưu nháp 💾)</span>
-                                <span id="autosave-status" class="text-green-600 hidden">Đã lưu nháp!</span>
+                                <span>Gõ bài vào đây (Tự lưu nháp 💾) <span class="text-blue-500 bg-blue-50 px-2 py-0.5 rounded border ml-2">Đã gõ: <span id="student-word-count">0</span> từ</span></span>
+                                <span id="autosave-status" class="text-green-600 hidden">Đã lưu!</span>
                             </div>
                             
-                            <textarea id="answer-box" oninput="autoSaveWork()" class="w-full flex-grow border-2 border-blue-300 rounded p-4 outline-none focus:border-pink-500 text-sm leading-relaxed overflow-y-auto resize-none"></textarea>
+                            <textarea id="answer-box" oninput="autoSaveWork()" class="w-full flex-grow border-2 border-blue-300 rounded p-4 outline-none focus:border-pink-500 text-base leading-relaxed overflow-y-auto resize-none transition-all"></textarea>
                             
-                            <div class="flex flex-wrap items-center gap-4 bg-yellow-50 p-2 border border-yellow-300 rounded shrink-0">
+                            <div class="flex flex-wrap items-center gap-4 bg-yellow-50 p-2 border border-yellow-300 rounded shrink-0 text-black">
                                 <label class="font-bold text-xs text-yellow-800">Nộp File đính kèm:</label>
                                 <input type="file" id="upload-file" class="text-xs cursor-pointer max-w-[200px]" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg">
                                 <input type="hidden" id="upload-file-base64">
                             </div>
-                            <button id="btn-submit" onclick="submitWork()" class="btn-90s bg-green-300 py-2 mt-1 text-lg font-bold shrink-0">Nộp Bài 📤</button>
+                            <button id="btn-submit" onclick="submitWork(false)" class="btn-90s bg-green-300 py-2 mt-1 text-lg font-bold shrink-0">Nộp Bài 📤</button>
                         </div>
+                    </div>
+
+                    <!-- THANH ĐIỀU HƯỚNG CÂU HỎI Ở ĐÁY (MOCKUP IELTS) -->
+                    <div id="bottom-nav-bar" class="absolute bottom-0 left-0 right-0 h-14 bg-gray-200 border-t-2 border-gray-300 flex items-center px-4 overflow-x-auto gap-2 rounded-b hidden">
+                        <span class="text-xs font-bold text-gray-600 whitespace-nowrap mr-2">Questions:</span>
+                        <!-- Javascript sẽ render 40 nút vuông ở đây -->
+                        <div id="nav-buttons-container" class="flex gap-1"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- TAB 3: LỊCH SỬ NỘP BÀI (THIẾT KẾ MỚI VỚI TIMESTAMPS) -->
+            <!-- TAB 3: LỊCH SỬ NỘP BÀI -->
             <div id="tab-history" class="tab-content hidden">
-                
-                <!-- BƯỚC 1: DANH SÁCH LỊCH SỬ -->
-                <div id="history-list-view">
-                    <h3 class="text-2xl font-bold text-green-600 mb-4">🗂️ Lịch sử Nộp Bài & Trả Bài</h3>
-                    <div id="history-card-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <p class="text-gray-500 italic">Đang tải lịch sử...</p>
-                    </div>
-                </div>
-
-                <!-- BƯỚC 2: CHI TIẾT BÀI CHẤM -->
+                <div id="history-list-view"><h3 class="text-2xl font-bold text-green-600 mb-4">🗂️ Lịch sử Nộp Bài & Trả Bài</h3><div id="history-card-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"><p class="text-gray-500 italic">Đang tải lịch sử...</p></div></div>
                 <div id="history-detail-view" class="hidden">
-                    <div class="flex justify-between items-center mb-4 border-b pb-2">
-                        <div class="flex items-center">
-                            <button onclick="backToHistoryList()" class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm font-bold mr-3 hover:bg-gray-300">⬅ Quay lại</button>
-                            <span id="hist-display-title" class="text-xl font-bold text-blue-700">Tiêu đề bài tập</span>
-                        </div>
-                        <div id="hist-display-score" class="font-bold bg-green-100 text-green-700 px-4 py-1 rounded-full border border-green-300">Điểm: --</div>
-                    </div>
-                    
+                    <div class="flex justify-between items-center mb-4 border-b pb-2"><div class="flex items-center"><button onclick="backToHistoryList()" class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm font-bold mr-3 hover:bg-gray-300">⬅ Quay lại</button><span id="hist-display-title" class="text-xl font-bold text-blue-700">Tiêu đề bài tập</span></div><div id="hist-display-score" class="font-bold bg-green-100 text-green-700 px-4 py-1 rounded-full border border-green-300">Điểm: --</div></div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Bài làm gốc -->
-                        <div class="border rounded flex flex-col h-[500px]">
-                            <div class="bg-gray-100 p-2 border-b font-bold text-gray-700 text-sm">📄 Bài nộp gốc của bạn</div>
-                            <div id="hist-original-content" class="p-4 bg-white flex-grow overflow-y-auto text-sm whitespace-pre-wrap text-gray-700"></div>
-                        </div>
-                        
-                        <!-- Lời phê -->
-                        <div class="border rounded flex flex-col h-[500px]">
-                            <div class="bg-green-100 p-2 border-b font-bold text-green-800 text-sm">👩‍🏫 Giáo viên nhận xét (Feedback)</div>
-                            <div id="hist-feedback-content" class="p-4 bg-green-50 flex-grow overflow-y-auto text-sm leading-relaxed"></div>
-                        </div>
+                        <div class="border rounded flex flex-col h-[500px]"><div class="bg-gray-100 p-2 border-b font-bold text-gray-700 text-sm">📄 Bài nộp gốc của bạn</div><div id="hist-original-content" class="p-4 bg-white flex-grow overflow-y-auto text-sm whitespace-pre-wrap text-gray-700"></div></div>
+                        <div class="border rounded flex flex-col h-[500px]"><div class="bg-green-100 p-2 border-b font-bold text-green-800 text-sm">👩‍🏫 Giáo viên nhận xét (Feedback)</div><div id="hist-feedback-content" class="p-4 bg-green-50 flex-grow overflow-y-auto text-sm leading-relaxed"></div></div>
                     </div>
                 </div>
             </div>
 
-            <!-- TAB 4: Q&A -->
-            <div id="tab-qna" class="tab-content hidden">
-                <div class="bg-orange-50 p-4 border rounded mb-6 flex gap-2">
-                    <input type="text" id="qna-question" placeholder="Nhập câu hỏi của bạn cho thầy cô..." class="w-full p-2 border rounded outline-none">
-                    <button onclick="askQuestion()" class="btn-90s bg-orange-300 px-6 font-bold">Gửi</button>
-                </div>
-                <h4 class="font-bold text-lg mb-2">Lịch sử Hỏi - Đáp:</h4>
-                <div id="qna-student-list" class="space-y-4 max-h-[400px] overflow-y-auto"></div>
-            </div>
-
-            <!-- TAB 5: ERROR LOG -->
-            <div id="tab-error" class="tab-content hidden">
-                <p class="text-sm text-gray-500 mb-2 font-bold">Tự động lưu bảng lỗi vào hệ thống khi bạn gõ xong mỗi ô 💾</p>
-                <div class="overflow-x-auto h-[500px] border border-gray-300 shadow-inner">
-                    <table class="min-w-full bg-white text-left text-sm" id="error-table">
-                        <thead class="bg-gray-100 sticky top-0 border-b z-10"><tr><th class="p-2 border-r">No.</th><th class="p-2 border-r w-1/4">Question</th><th class="p-2 border-r w-1/5">Given Answer</th><th class="p-2 border-r w-1/5">Wrong Choice</th><th class="p-2">Correct Answer & Why</th></tr></thead>
-                        <tbody id="error-log-body"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- TAB 6: HANDOUTS -->
+            <!-- CÁC TAB KHÁC -->
+            <div id="tab-qna" class="tab-content hidden"><div class="bg-orange-50 p-4 border rounded mb-6 flex gap-2"><input type="text" id="qna-question" placeholder="Nhập câu hỏi của bạn cho thầy cô..." class="w-full p-2 border rounded outline-none"><button onclick="askQuestion()" class="btn-90s bg-orange-300 px-6 font-bold">Gửi</button></div><h4 class="font-bold text-lg mb-2">Lịch sử Hỏi - Đáp:</h4><div id="qna-student-list" class="space-y-4 max-h-[400px] overflow-y-auto"></div></div>
+            <div id="tab-error" class="tab-content hidden"><p class="text-sm text-gray-500 mb-2 font-bold">Tự động lưu bảng lỗi vào hệ thống khi bạn gõ xong mỗi ô 💾</p><div class="overflow-x-auto h-[500px] border border-gray-300 shadow-inner"><table class="min-w-full bg-white text-left text-sm" id="error-table"><thead class="bg-gray-100 sticky top-0 border-b z-10"><tr><th class="p-2 border-r">No.</th><th class="p-2 border-r w-1/4">Question</th><th class="p-2 border-r w-1/5">Given Answer</th><th class="p-2 border-r w-1/5">Wrong Choice</th><th class="p-2">Correct Answer & Why</th></tr></thead><tbody id="error-log-body"></tbody></table></div></div>
             <div id="tab-handouts" class="tab-content hidden"><ul id="handouts-list" class="space-y-3"></ul></div>
         </div>
     </div>
 
+    <!-- MÀN HÌNH KHÓA KHI HẾT GIỜ -->
+    <div id="timeout-overlay" class="fixed inset-0 bg-black bg-opacity-80 z-50 flex flex-col items-center justify-center hidden">
+        <h2 class="text-5xl font-bold text-red-500 mb-4 animate-bounce">HẾT GIỜ!</h2>
+        <p class="text-white text-xl mb-6">Hệ thống đang tự động nộp bài của bạn...</p>
+        <div class="w-12 h-12 border-4 border-white border-t-red-500 rounded-full animate-spin"></div>
+    </div>
+
     <script>
         const supabaseUrl = 'https://bcxjskvyromnrrtzqafu.supabase.co'; const supabaseKey = 'sb_publishable_4kpK2eA9PWZsXr0w2GHZYQ_Vq2hzkEO';
-        let dbClient = null; let loggedInUser = null; 
-        let globalAssignments = []; 
-        let globalHistory = [];
+        let dbClient = null; let loggedInUser = null; let globalAssignments = []; let globalHistory = [];
+        
+        // Timer Variables
+        let timerInterval = null;
+        let timeRemaining = 0; // In seconds
 
         window.addEventListener('DOMContentLoaded', () => { if (window.supabase) dbClient = window.supabase.createClient(supabaseUrl, supabaseKey); });
         
         function switchTab(id) { 
             document.querySelectorAll('.tab-content').forEach(el => { el.classList.add('hidden'); el.classList.remove('block'); }); 
             document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('block'); 
-            
-            // Xử lý reset view con
             if(id === 'tab-assignments') { document.getElementById('ass-detail-view').classList.add('hidden'); document.getElementById('ass-list-view').classList.remove('hidden'); }
             if(id === 'tab-history') { document.getElementById('history-detail-view').classList.add('hidden'); document.getElementById('history-list-view').classList.remove('hidden'); }
         }
         function togglePass(id) { const el = document.getElementById(id); el.type = el.type === 'password' ? 'text' : 'password'; }
         function formatPassage(cmd, val = null) { document.execCommand(cmd, false, val); document.getElementById('display-content').focus(); }
-        
-        // HÀM FORMAT NGÀY THÁNG NAM
-        function formatDateTime(isoString) {
-            if (!isoString) return '--';
-            const d = new Date(isoString);
-            return d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
-        }
+        function formatDateTime(isoString) { if (!isoString) return '--'; const d = new Date(isoString); return d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'}); }
 
-        // FILE & ANTI CHEAT & AUTOSAVE
-        document.getElementById('upload-file').addEventListener('change', function(e) {
-            const file = e.target.files[0]; if(file.size > 2*1024*1024) { alert("File quá lớn!"); this.value = ""; return; }
-            const reader = new FileReader(); reader.onload = function(evt) { document.getElementById('upload-file-base64').value = evt.target.result; }; reader.readAsDataURL(file);
-        });
-        document.getElementById('answer-box').addEventListener('paste', function(e) {
-            if(((e.clipboardData || window.clipboardData).getData('text')).trim().split(/\s+/).length > 30) { alert("🚨 GIAN LẬN: COPY PASTE!"); document.getElementById('cheat-flag').value = "true"; document.getElementById('answer-box').classList.add('bg-red-50'); }
-        });
+        // FILE & ANTI CHEAT & AUTOSAVE CÓ ĐẾM TỪ
+        document.getElementById('upload-file').addEventListener('change', function(e) { const file = e.target.files[0]; if(file.size > 2*1024*1024) { alert("File quá lớn!"); this.value = ""; return; } const reader = new FileReader(); reader.onload = function(evt) { document.getElementById('upload-file-base64').value = evt.target.result; }; reader.readAsDataURL(file); });
+        document.getElementById('answer-box').addEventListener('paste', function(e) { if(((e.clipboardData || window.clipboardData).getData('text')).trim().split(/\s+/).length > 30) { document.getElementById('cheat-flag').value = "true"; document.getElementById('answer-box').classList.add('bg-red-50'); } });
+        
         function autoSaveWork() {
-            const assId = document.getElementById('current-ass-id').value; if(!assId) return;
-            localStorage.setItem(`draft_${loggedInUser}_${assId}`, document.getElementById('answer-box').value);
+            const assId = document.getElementById('current-ass-id').value; 
+            const content = document.getElementById('answer-box').value;
+            const words = content.trim() === '' ? 0 : content.trim().split(/\s+/).length;
+            document.getElementById('student-word-count').innerText = words;
+            if(!assId) return;
+            localStorage.setItem(`draft_${loggedInUser}_${assId}`, content);
             const status = document.getElementById('autosave-status'); status.classList.remove('hidden');
             clearTimeout(window.saveTimeout); window.saveTimeout = setTimeout(() => status.classList.add('hidden'), 2000);
         }
@@ -237,10 +226,8 @@
             if (data && data.length > 0) {
                 loggedInUser = u; document.getElementById('login-page').style.display = 'none'; document.getElementById('dashboard-page').classList.remove('hidden-page');
                 document.getElementById('welcome-text').innerText = "Hello, " + (data[0].full_name || u) + "!";
-                
                 const meetBanner = document.getElementById('meet-banner'); const meetBtn = document.getElementById('meet-link-btn');
                 if(data[0].meet_link) { meetBtn.href = data[0].meet_link; meetBanner.classList.remove('hidden'); } else { meetBanner.classList.add('hidden'); }
-
                 loadTracker(u); loadHandouts(u); loadAssignmentList(u); loadHistory(u); loadQnA(u); loadErrorLog(u);
             } else document.getElementById('login-error').classList.remove('hidden');
         }
@@ -248,138 +235,192 @@
         async function loadTracker(user) { const { data } = await dbClient.from('student_lessons').select('*').eq('username', user).order('id', { ascending: true }); document.getElementById('student-tracker-body').innerHTML = (data||[]).map(l => `<tr class="excel-row"><td class="excel-cell">${l.session_date}</td><td class="excel-cell whitespace-pre-wrap">${l.content}</td><td class="excel-cell ${l.payment_status==='PAID'?'text-green-700':'text-red-700'}">${l.payment_status}</td></tr>`).join(''); }
         async function loadHandouts(user) { const { data } = await dbClient.from('handouts').select('*').in('target_student', ['ALL', user]).order('id', { ascending: false }); document.getElementById('handouts-list').innerHTML = (data||[]).map(h => `<li class="p-4 bg-gray-50 border rounded flex justify-between"><span class="font-bold">📄 ${h.title}</span><a href="${h.file_url}" target="_blank" class="btn-90s bg-white px-4 py-1 text-sm">Mở File</a></li>`).join(''); }
         
-        // BÀI TẬP: LIST
+        // BÀI TẬP LIST
         async function loadAssignmentList(user) {
             const { data: assignments } = await dbClient.from('assignments').select('*').in('target_student', ['ALL', user]).order('id', { ascending: false }); globalAssignments = assignments || [];
             const { data: subs } = await dbClient.from('submissions').select('assignment_id').eq('username', user); const submittedIds = (subs || []).map(s => s.assignment_id);
-
             const container = document.getElementById('ass-card-container');
             if(globalAssignments.length === 0) { container.innerHTML = `<p class="col-span-3 text-gray-500 italic border p-4 rounded bg-gray-50">Không có bài tập nào.</p>`; return; }
-
             container.innerHTML = globalAssignments.map(ass => {
-                const isDone = submittedIds.includes(ass.id);
-                const typeIcon = ass.ass_type === 'READING' ? '📖' : (ass.ass_type === 'LISTENING' ? '🎧' : '✍️');
+                const isDone = submittedIds.includes(ass.id); const typeIcon = ass.ass_type === 'READING' ? '📖' : (ass.ass_type === 'LISTENING' ? '🎧' : '✍️');
                 const statusBadge = isDone ? `<span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full border border-green-300 font-bold">✅ Đã nộp</span>` : `<span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full border border-red-300 font-bold">⚠️ Chưa làm</span>`;
                 const startStr = ass.assigned_date ? `📅 Giao: ${ass.assigned_date}` : ''; const deadStr = ass.deadline_date ? `⏰ Deadline: ${ass.deadline_date}` : '';
                 const dateHtml = (startStr || deadStr) ? `<div class="mt-2 text-xs font-bold text-red-600 bg-red-50 p-1 rounded inline-block border border-red-200">${startStr} &nbsp; ${deadStr}</div>` : '';
-
                 return `<div class="border-2 border-blue-200 rounded-lg p-5 bg-white shadow-sm flex flex-col justify-between hover:shadow-md transition"><div class="mb-4"><div class="flex justify-between items-start mb-2"><span class="text-2xl">${typeIcon}</span>${statusBadge}</div><h4 class="font-bold text-gray-800 text-lg mb-1 leading-tight">${ass.title}</h4><p class="text-sm text-gray-500">⏱ ${ass.timer_minutes} phút</p>${dateHtml}</div><button onclick="startAssignment(${ass.id})" class="btn-90s bg-blue-100 w-full py-2 text-blue-800 text-sm">Vào Làm Bài ➔</button></div>`;
             }).join('');
         }
 
+        // SETTINGS: ĐỔI CỠ CHỮ & THEME MÀU
+        function changeFontSize(sizeClass) {
+            const el1 = document.getElementById('display-content'); const el2 = document.getElementById('answer-box');
+            el1.classList.remove('text-sm', 'text-base', 'text-lg'); el1.classList.add(sizeClass);
+            el2.classList.remove('text-sm', 'text-base', 'text-lg'); el2.classList.add(sizeClass);
+        }
+        function changeTheme(themeClass) {
+            const material = document.getElementById('ass-material');
+            material.classList.remove('theme-standard', 'theme-reading', 'theme-dark');
+            material.classList.add(themeClass);
+        }
+
+        // HÀM ĐẾM NGƯỢC THỜI GIAN
+        function startTimer(minutes) {
+            clearInterval(timerInterval);
+            timeRemaining = minutes * 60;
+            const timerDisplay = document.getElementById('display-timer');
+            const timerBox = document.getElementById('display-timer-box');
+            
+            timerBox.className = "font-bold bg-green-100 text-green-700 px-4 py-2 rounded border border-green-300 text-lg flex items-center gap-2";
+
+            timerInterval = setInterval(() => {
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.innerText = "00:00";
+                    forceSubmitWork(); // TỰ ĐỘNG NỘP KHI HẾT GIỜ
+                    return;
+                }
+                timeRemaining--;
+                let m = Math.floor(timeRemaining / 60); let s = timeRemaining % 60;
+                timerDisplay.innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+                
+                // Cảnh báo dưới 5 phút
+                if(timeRemaining === 300) {
+                    timerBox.className = "font-bold timer-warning px-4 py-2 rounded border text-lg flex items-center gap-2";
+                }
+            }, 1000);
+        }
+
+        // VÀO LÀM BÀI
         function startAssignment(assId) {
             const ass = globalAssignments.find(a => a.id === assId); if(!ass) return;
-            document.getElementById('ass-list-view').classList.add('hidden'); document.getElementById('ass-detail-view').classList.remove('hidden');
-
-            const type = ass.ass_type || 'WRITING';
-            document.getElementById('current-ass-id').value = ass.id; document.getElementById('display-title').innerText = `[${type}] ` + ass.title; document.getElementById('display-timer').innerText = ass.timer_minutes + ":00";
             
+            // Ẩn Menu Tab chính để tránh bấm nhầm khi thi
+            document.getElementById('main-tabs').classList.add('hidden');
+            
+            document.getElementById('ass-list-view').classList.add('hidden'); document.getElementById('ass-detail-view').classList.remove('hidden');
+            const type = ass.ass_type || 'WRITING'; document.getElementById('current-ass-id').value = ass.id; document.getElementById('display-title').innerText = `[${type}] ` + ass.title; 
+            
+            // Khởi động Timer
+            startTimer(ass.timer_minutes || 40);
+
             const qEl = document.getElementById('display-questions'); if(ass.question_text) { qEl.innerText = ass.question_text; qEl.classList.remove('hidden'); } else { qEl.classList.add('hidden'); qEl.innerText = ""; }
             document.getElementById('display-content').innerText = ass.content || "Không có đề bài (Text).";
             
-            document.getElementById('answer-box').value = localStorage.getItem(`draft_${loggedInUser}_${ass.id}`) || "";
+            const savedText = localStorage.getItem(`draft_${loggedInUser}_${ass.id}`) || "";
+            document.getElementById('answer-box').value = savedText;
+            const initWords = savedText.trim() === '' ? 0 : savedText.trim().split(/\s+/).length;
+            document.getElementById('student-word-count').innerText = initWords;
             document.getElementById('answer-box').classList.remove('bg-red-50'); document.getElementById('cheat-flag').value = "false";
+            
+            // Bật nút nộp bài
+            document.getElementById('btn-submit').disabled = false; document.getElementById('btn-submit').innerText = "Nộp Bài 📤";
 
+            // Bố cục Layout
             const layout = document.getElementById('ass-layout'); const material = document.getElementById('ass-material'); const workspace = document.getElementById('ass-workspace');
-            if (type === 'READING') { layout.className = "flex flex-col md:flex-row gap-4"; material.className = "w-full md:w-1/2 bg-gray-50 border rounded flex flex-col h-[650px] shadow-inner"; workspace.className = "w-full md:w-1/2 flex flex-col gap-2 h-[650px]"; } else if (type === 'LISTENING') { layout.className = "flex flex-col gap-4"; material.className = "w-full bg-gray-50 border rounded flex flex-col max-h-[400px]"; workspace.className = "w-full flex flex-col gap-2 h-[500px]"; } else { layout.className = "flex flex-col md:flex-row gap-4"; material.className = "w-full md:w-1/2 bg-gray-50 border rounded flex flex-col h-[650px] shadow-inner"; workspace.className = "w-full md:w-1/2 flex flex-col gap-2 h-[650px]"; }
-
+            const navBar = document.getElementById('bottom-nav-bar');
+            
+            if (type === 'READING') { 
+                layout.className = "flex flex-col md:flex-row gap-4"; material.className = "w-full md:w-1/2 border rounded flex flex-col h-[550px] shadow-inner theme-standard transition-colors"; workspace.className = "w-full md:w-1/2 flex flex-col gap-2 h-[550px]"; 
+                // Render Mockup Bottom Nav (40 câu)
+                navBar.classList.remove('hidden');
+                let btns = ''; for(let i=1; i<=40; i++) { btns += `<button class="w-8 h-8 flex-shrink-0 bg-white border border-gray-400 rounded-sm text-xs font-bold hover:bg-blue-100">${i}</button>`; }
+                document.getElementById('nav-buttons-container').innerHTML = btns;
+            } else if (type === 'LISTENING') { 
+                layout.className = "flex flex-col gap-4"; material.className = "w-full border rounded flex flex-col max-h-[400px] theme-standard transition-colors"; workspace.className = "w-full flex flex-col gap-2 h-[450px]"; 
+                navBar.classList.add('hidden');
+            } else { 
+                layout.className = "flex flex-col md:flex-row gap-4"; material.className = "w-full md:w-1/2 border rounded flex flex-col h-[550px] shadow-inner theme-standard transition-colors"; workspace.className = "w-full md:w-1/2 flex flex-col gap-2 h-[550px]"; 
+                navBar.classList.add('hidden');
+            }
+            
             if (ass.audio_url) { document.getElementById('audio-container').classList.remove('hidden'); document.getElementById('audio-source').src = ass.audio_url; document.getElementById('audio-player').load(); } else document.getElementById('audio-container').classList.add('hidden');
             if (ass.image_url) { document.getElementById('display-image').src = ass.image_url; document.getElementById('display-image').classList.remove('hidden'); } else document.getElementById('display-image').classList.add('hidden');
         }
 
-        function backToAssList() { document.getElementById('ass-detail-view').classList.add('hidden'); document.getElementById('ass-list-view').classList.remove('hidden'); const audio = document.getElementById('audio-player'); if(audio) audio.pause(); }
-
-        async function submitWork() {
-            const assId = document.getElementById('current-ass-id').value; let content = document.getElementById('answer-box').value.trim();
-            const fileData = document.getElementById('upload-file-base64').value; const isCheated = document.getElementById('cheat-flag').value === "true";
-            if (!assId) return alert("Lỗi ID!"); if (!content && !fileData) return alert("Chưa gõ bài hoặc up file!");
-
-            document.getElementById('btn-submit').innerText = "Đang nộp..."; document.getElementById('btn-submit').disabled = true;
-            if (isCheated) content = "[🚨 GIAN LẬN: COPY PASTE QUÁ DÀI]\n\n" + content;
-
-            const { error } = await dbClient.from('submissions').insert([{ username: loggedInUser, assignment_id: parseInt(assId), content: content, file_data: fileData, is_cheated: isCheated }]);
-            if (!error) {
-                alert("✅ Đã nộp bài thành công!"); localStorage.removeItem(`draft_${loggedInUser}_${assId}`);
-                document.getElementById('answer-box').value = ""; document.getElementById('upload-file').value = ""; document.getElementById('upload-file-base64').value = "";
-                loadAssignmentList(loggedInUser); loadHistory(loggedInUser); backToAssList();
-            } else { alert("Lỗi nộp bài: " + error.message); }
-            document.getElementById('btn-submit').innerText = "Nộp Bài 📤"; document.getElementById('btn-submit').disabled = false;
+        // THOÁT THI SỚM
+        function backToAssList() { 
+            if(confirm("Bạn có chắc muốn thoát? Bài làm đang dở sẽ được lưu nháp nhưng đồng hồ sẽ bị hủy!")) {
+                clearInterval(timerInterval);
+                document.getElementById('main-tabs').classList.remove('hidden');
+                document.getElementById('ass-detail-view').classList.add('hidden'); 
+                document.getElementById('ass-list-view').classList.remove('hidden'); 
+                const audio = document.getElementById('audio-player'); if(audio) audio.pause(); 
+            }
         }
 
-        // LỊCH SỬ NỘP BÀI (CÓ TIMESTAMPS VÀ VIEW CHI TIẾT)
+        // TỰ ĐỘNG NỘP KHI HẾT GIỜ
+        async function forceSubmitWork() {
+            document.getElementById('timeout-overlay').classList.remove('hidden');
+            document.getElementById('answer-box').disabled = true;
+            await submitWork(true);
+            setTimeout(() => {
+                document.getElementById('timeout-overlay').classList.add('hidden');
+                document.getElementById('answer-box').disabled = false;
+                document.getElementById('main-tabs').classList.remove('hidden');
+            }, 3000);
+        }
+
+        // NỘP BÀI CHUNG
+        async function submitWork(isAuto = false) {
+            const assId = document.getElementById('current-ass-id').value; let content = document.getElementById('answer-box').value.trim();
+            const fileData = document.getElementById('upload-file-base64').value; const isCheated = document.getElementById('cheat-flag').value === "true";
+            
+            if (!isAuto) {
+                if (!assId) return alert("Lỗi ID!"); 
+                if (!content && !fileData) return alert("Chưa gõ bài hoặc up file!");
+                if(!confirm("Bạn có chắc chắn muốn nộp bài? Không thể sửa lại sau khi nộp!")) return;
+            }
+
+            document.getElementById('btn-submit').innerText = "Đang nộp..."; document.getElementById('btn-submit').disabled = true;
+            clearInterval(timerInterval);
+
+            if (isCheated) content = "[🚨 GIAN LẬN: COPY PASTE]\n\n" + content;
+            if (isAuto && !content) content = "[Hết giờ - Học sinh không gõ gì vào khung trả lời]";
+
+            const { error } = await dbClient.from('submissions').insert([{ username: loggedInUser, assignment_id: parseInt(assId), content: content, file_data: fileData, is_cheated: isCheated }]);
+            if (!error) { 
+                if(!isAuto) alert("✅ Đã nộp bài thành công!"); 
+                localStorage.removeItem(`draft_${loggedInUser}_${assId}`); 
+                document.getElementById('answer-box').value = ""; document.getElementById('upload-file').value = ""; document.getElementById('upload-file-base64').value = ""; 
+                loadAssignmentList(loggedInUser); loadHistory(loggedInUser); 
+                
+                // Quay về màn hình danh sách
+                document.getElementById('ass-detail-view').classList.add('hidden'); 
+                document.getElementById('ass-list-view').classList.remove('hidden');
+                document.getElementById('main-tabs').classList.remove('hidden');
+            } else { 
+                alert("Lỗi nộp bài: " + error.message); 
+                document.getElementById('btn-submit').innerText = "Thử Nộp Lại"; document.getElementById('btn-submit').disabled = false;
+            }
+        }
+
+        // LỊCH SỬ NỘP BÀI
         async function loadHistory(user) {
             const { data: assData } = await dbClient.from('assignments').select('id, title, assigned_date'); const assMap = {}; (assData||[]).forEach(a => assMap[a.id] = a);
             const { data: subData } = await dbClient.from('submissions').select('*').eq('username', user).order('created_at', { ascending: false });
-            
-            // Gắn thêm thông tin đề bài vào lịch sử
-            globalHistory = (subData || []).map(sub => {
-                sub.ass_info = assMap[sub.assignment_id] || { title: 'Bài tập không xác định', assigned_date: '--' };
-                return sub;
-            });
-
+            globalHistory = (subData || []).map(sub => { sub.ass_info = assMap[sub.assignment_id] || { title: 'Bài tập không xác định', assigned_date: '--' }; return sub; });
             const container = document.getElementById('history-card-container');
             if(globalHistory.length === 0) { container.innerHTML = `<p class="col-span-2 text-gray-500 italic border p-4 rounded bg-gray-50">Chưa có bài nộp nào.</p>`; return; }
-
             container.innerHTML = globalHistory.map(sub => {
-                const isGraded = !!sub.score;
-                const statusBadge = isGraded ? `<span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full border border-green-300 font-bold">✅ Điểm: ${sub.score}</span>` : `<span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full border border-yellow-300 font-bold">⏳ Chờ chấm</span>`;
-                const submittedTime = formatDateTime(sub.created_at);
-                const gradedTime = isGraded && sub.graded_at ? formatDateTime(sub.graded_at) : 'Chưa chấm';
-                
-                return `
-                <div class="border-2 border-green-200 rounded-lg p-4 bg-white shadow-sm flex flex-col justify-between hover:shadow-md transition cursor-pointer" onclick="viewHistoryDetail(${sub.id})">
-                    <div class="mb-3">
-                        <div class="flex justify-between items-start mb-2"><h4 class="font-bold text-gray-800 text-lg leading-tight line-clamp-2 pr-2">${sub.ass_info.title}</h4><div class="shrink-0">${statusBadge}</div></div>
-                        <div class="text-xs text-gray-600 space-y-1 mt-2 bg-gray-50 p-2 rounded border">
-                            <p>📅 <span class="font-semibold">Ngày giao:</span> ${sub.ass_info.assigned_date || '--'}</p>
-                            <p>📤 <span class="font-semibold">Đã nộp:</span> ${submittedTime}</p>
-                            <p>👩‍🏫 <span class="font-semibold">Đã trả:</span> ${gradedTime}</p>
-                        </div>
-                    </div>
-                    <button class="bg-green-50 text-green-700 font-bold w-full py-1.5 rounded border border-green-200 text-sm hover:bg-green-100">Xem bài sửa ➔</button>
-                </div>`;
+                const isGraded = !!sub.score; const statusBadge = isGraded ? `<span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full border border-green-300 font-bold">✅ Điểm: ${sub.score}</span>` : `<span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full border border-yellow-300 font-bold">⏳ Chờ chấm</span>`;
+                const submittedTime = formatDateTime(sub.created_at); const gradedTime = isGraded && sub.graded_at ? formatDateTime(sub.graded_at) : 'Chưa chấm';
+                return `<div class="border-2 border-green-200 rounded-lg p-4 bg-white shadow-sm flex flex-col justify-between hover:shadow-md transition cursor-pointer" onclick="viewHistoryDetail(${sub.id})"><div class="mb-3"><div class="flex justify-between items-start mb-2"><h4 class="font-bold text-gray-800 text-lg leading-tight line-clamp-2 pr-2">${sub.ass_info.title}</h4><div class="shrink-0">${statusBadge}</div></div><div class="text-xs text-gray-600 space-y-1 mt-2 bg-gray-50 p-2 rounded border"><p>📅 <span class="font-semibold">Ngày giao:</span> ${sub.ass_info.assigned_date || '--'}</p><p>📤 <span class="font-semibold">Đã nộp:</span> ${submittedTime}</p><p>👩‍🏫 <span class="font-semibold">Đã trả:</span> ${gradedTime}</p></div></div><button class="bg-green-50 text-green-700 font-bold w-full py-1.5 rounded border border-green-200 text-sm hover:bg-green-100">Xem bài sửa ➔</button></div>`;
             }).join('');
         }
-
         function viewHistoryDetail(subId) {
             const sub = globalHistory.find(s => s.id === subId); if(!sub) return;
             document.getElementById('history-list-view').classList.add('hidden'); document.getElementById('history-detail-view').classList.remove('hidden');
-            
-            document.getElementById('hist-display-title').innerText = sub.ass_info.title;
-            const scoreEl = document.getElementById('hist-display-score');
-            if (sub.score) { scoreEl.className = "font-bold bg-green-100 text-green-700 px-4 py-1 rounded-full border border-green-300"; scoreEl.innerText = "Điểm: " + sub.score; } 
-            else { scoreEl.className = "font-bold bg-yellow-100 text-yellow-700 px-4 py-1 rounded-full border border-yellow-300"; scoreEl.innerText = "⏳ Chờ chấm"; }
-
-            document.getElementById('hist-original-content').innerText = sub.content || 'Không có nội dung text (Bạn chỉ nộp file đính kèm).';
-            
-            const fbEl = document.getElementById('hist-feedback-content');
-            if (sub.feedback_content) { fbEl.innerHTML = sub.feedback_content; } 
-            else { fbEl.innerHTML = '<p class="text-gray-500 italic">Giáo viên chưa chấm bài này.</p>'; }
+            document.getElementById('hist-display-title').innerText = sub.ass_info.title; const scoreEl = document.getElementById('hist-display-score');
+            if (sub.score) { scoreEl.className = "font-bold bg-green-100 text-green-700 px-4 py-1 rounded-full border border-green-300"; scoreEl.innerText = "Điểm: " + sub.score; } else { scoreEl.className = "font-bold bg-yellow-100 text-yellow-700 px-4 py-1 rounded-full border border-yellow-300"; scoreEl.innerText = "⏳ Chờ chấm"; }
+            document.getElementById('hist-original-content').innerText = sub.content || 'Không có nội dung text.';
+            const fbEl = document.getElementById('hist-feedback-content'); if (sub.feedback_content) { fbEl.innerHTML = sub.feedback_content; } else { fbEl.innerHTML = '<p class="text-gray-500 italic">Giáo viên chưa chấm bài này.</p>'; }
         }
-
         function backToHistoryList() { document.getElementById('history-detail-view').classList.add('hidden'); document.getElementById('history-list-view').classList.remove('hidden'); }
 
-
-        // Q&A & ERROR LOG
+        // Q&A & ERRORS
         async function loadQnA(user) { const { data } = await dbClient.from('qna').select('*').eq('username', user).order('created_at', { ascending: false }); document.getElementById('qna-student-list').innerHTML = (data||[]).map(q => `<div class="p-3 border rounded ${q.answer?'bg-green-50 border-green-300':'bg-gray-50'}"><p class="font-bold text-orange-600">Bạn hỏi:</p><p class="italic text-sm mb-2">${q.question}</p>${q.answer?`<p class="font-bold text-green-700">GV Trả lời:</p><p class="text-sm">${q.answer}</p>`:`<p class="text-xs text-gray-400">⏳ Đang chờ giáo viên phản hồi...</p>`}</div>`).join(''); }
         async function askQuestion() { const q = document.getElementById('qna-question').value.trim(); if(!q) return; await dbClient.from('qna').insert([{ username: loggedInUser, question: q }]); document.getElementById('qna-question').value = ''; loadQnA(loggedInUser); alert("✅ Đã gửi!"); }
-        
-        async function loadErrorLog(user) {
-            const { data } = await dbClient.from('error_logs').select('*').eq('username', user); const dataMap = {}; (data||[]).forEach(d => dataMap[d.row_index] = d);
-            let html = '';
-            for(let i=1; i<=100; i++) {
-                const row = dataMap[i] || { question:'', given_answer:'', wrong_choice:'', correct_answer:'' };
-                html += `<tr class="border-b"><td class="p-2 border-r text-center font-bold text-gray-500">${i}</td><td class="p-1 border-r"><textarea data-row="${i}" data-col="question" class="err-input w-full bg-transparent outline-none resize-none p-1" rows="2">${row.question}</textarea></td><td class="p-1 border-r"><textarea data-row="${i}" data-col="given_answer" class="err-input w-full bg-transparent outline-none resize-none p-1" rows="2">${row.given_answer}</textarea></td><td class="p-1 border-r"><textarea data-row="${i}" data-col="wrong_choice" class="err-input w-full text-red-500 font-bold outline-none resize-none p-1" rows="2">${row.wrong_choice}</textarea></td><td class="p-1"><textarea data-row="${i}" data-col="correct_answer" class="err-input w-full text-green-600 font-bold outline-none resize-none p-1" rows="2">${row.correct_answer}</textarea></td></tr>`;
-            } document.getElementById('error-log-body').innerHTML = html;
-        }
-
-        document.getElementById('error-table').addEventListener('change', async function(e) {
-            if(e.target.classList.contains('err-input')) {
-                const rowIndex = e.target.getAttribute('data-row'); const colName = e.target.getAttribute('data-col'); const val = e.target.value;
-                const payload = { username: loggedInUser, row_index: parseInt(rowIndex) }; payload[colName] = val;
-                await dbClient.from('error_logs').upsert(payload, { onConflict: 'username, row_index' });
-            }
-        });
+        async function loadErrorLog(user) { const { data } = await dbClient.from('error_logs').select('*').eq('username', user); const dataMap = {}; (data||[]).forEach(d => dataMap[d.row_index] = d); let html = ''; for(let i=1; i<=100; i++) { const row = dataMap[i] || { question:'', given_answer:'', wrong_choice:'', correct_answer:'' }; html += `<tr class="border-b"><td class="p-2 border-r text-center font-bold text-gray-500">${i}</td><td class="p-1 border-r"><textarea data-row="${i}" data-col="question" class="err-input w-full bg-transparent outline-none resize-none p-1" rows="2">${row.question}</textarea></td><td class="p-1 border-r"><textarea data-row="${i}" data-col="given_answer" class="err-input w-full bg-transparent outline-none resize-none p-1" rows="2">${row.given_answer}</textarea></td><td class="p-1 border-r"><textarea data-row="${i}" data-col="wrong_choice" class="err-input w-full text-red-500 font-bold outline-none resize-none p-1" rows="2">${row.wrong_choice}</textarea></td><td class="p-1"><textarea data-row="${i}" data-col="correct_answer" class="err-input w-full text-green-600 font-bold outline-none resize-none p-1" rows="2">${row.correct_answer}</textarea></td></tr>`; } document.getElementById('error-log-body').innerHTML = html; }
+        document.getElementById('error-table').addEventListener('change', async function(e) { if(e.target.classList.contains('err-input')) { const rowIndex = e.target.getAttribute('data-row'); const colName = e.target.getAttribute('data-col'); const val = e.target.value; const payload = { username: loggedInUser, row_index: parseInt(rowIndex) }; payload[colName] = val; await dbClient.from('error_logs').upsert(payload, { onConflict: 'username, row_index' }); } });
     </script>
 </body>
 </html>
