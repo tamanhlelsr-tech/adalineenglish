@@ -86,7 +86,6 @@
                     </div>
                     
                     <div class="bg-white p-3 border rounded mb-2">
-                        <!-- CHỖ UP FILE TỪ VỰNG -->
                         <div class="mb-3 border-b pb-3">
                             <p class="text-sm font-bold text-blue-600 mb-1">Cách 1: Tải lên file Excel (.CSV)</p>
                             <input type="file" id="vocab-csv-file" accept=".csv" class="text-sm">
@@ -100,6 +99,7 @@
                     </div>
                     <button onclick="publishVocab()" class="btn-90s bg-green-400 px-6 py-2 font-bold w-full">🚀 Đăng Bộ Từ Vựng</button>
                 </div>
+                <!-- Danh sách Game từ vựng hiển thị ở đây -->
                 <div id="vocab-list-container" class="space-y-2 max-h-[300px] overflow-y-auto text-sm"></div>
             </div>
 
@@ -123,24 +123,20 @@
         </div>
     </div>
 
-    <!-- MODAL (CỬA SỔ) XEM TRƯỚC ĐỀ BÀI -->
+    <!-- MODAL XEM TRƯỚC ĐỀ BÀI (ASSIGNMENT) -->
     <div id="view-ass-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-lg w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden shadow-2xl">
-            <!-- Header của Modal -->
             <div class="p-4 border-b flex justify-between items-center bg-blue-50">
                 <h3 id="view-ass-modal-title" class="text-xl font-bold text-blue-800">Tiêu đề bài tập</h3>
                 <button onclick="closeAssModal()" class="text-gray-500 font-bold hover:text-red-500 text-2xl px-2">✖</button>
             </div>
-            <!-- Nội dung Đề bài chia 2 cột -->
             <div class="p-4 overflow-y-auto flex-grow flex flex-col md:flex-row gap-4 bg-gray-100">
-                <!-- Cột trái: Đề bài -->
                 <div class="w-full md:w-1/2 border rounded p-4 bg-white shadow-sm flex flex-col gap-3">
                     <h4 class="font-bold text-gray-700 border-b pb-2 text-sm uppercase">📖 Nội dung Đề bài (Bên Trái)</h4>
                     <div id="view-ass-audio" class="hidden bg-blue-100 p-2 rounded"><audio controls class="w-full h-8"><source src=""></audio></div>
                     <img id="view-ass-img" src="" class="max-w-full h-auto hidden border rounded">
                     <div id="view-ass-content" class="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed"></div>
                 </div>
-                <!-- Cột phải: Câu hỏi -->
                 <div class="w-full md:w-1/2 border rounded p-4 bg-pink-50 shadow-sm flex flex-col gap-3">
                     <h4 class="font-bold text-pink-700 border-b border-pink-200 pb-2 text-sm uppercase">❓ Câu hỏi (Bên Phải)</h4>
                     <div id="view-ass-question" class="whitespace-pre-wrap text-sm font-medium text-gray-800"></div>
@@ -149,9 +145,30 @@
         </div>
     </div>
 
+    <!-- MODAL XEM TRƯỚC QUIZ TỪ VỰNG -->
+    <div id="view-vocab-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            <div class="p-4 border-b flex justify-between items-center bg-green-50">
+                <h3 id="view-vocab-modal-title" class="text-xl font-bold text-green-800">Xem trước Từ Vựng</h3>
+                <button onclick="closeVocabModal()" class="text-gray-500 font-bold hover:text-red-500 text-2xl px-2">✖</button>
+            </div>
+            <div class="p-4 overflow-y-auto flex-grow bg-gray-50">
+                <table class="min-w-full text-left text-sm border-collapse bg-white border">
+                    <thead class="bg-gray-200">
+                        <tr><th class="p-2 border">STT</th><th class="p-2 border">Câu hỏi</th><th class="p-2 border text-green-600">Đáp án ĐÚNG</th><th class="p-2 border text-red-500">Các đáp án SAI</th></tr>
+                    </thead>
+                    <tbody id="view-vocab-body">
+                        <!-- Nội dung render bằng JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script>
         const supabaseUrl = 'https://bcxjskvyromnrrtzqafu.supabase.co'; const supabaseKey = 'sb_publishable_4kpK2eA9PWZsXr0w2GHZYQ_Vq2hzkEO';
         let dbClient = null; let currentSelectedUser = null; let globalAllStudents = [];
+        let allVocabQuizzes = []; // Lưu trữ vocab quiz
 
         window.addEventListener('DOMContentLoaded', () => { if (window.supabase) { dbClient = window.supabase.createClient(supabaseUrl, supabaseKey); refreshAll(); }});
         function refreshAll() { loadStudents(); loadAssignments(); loadTodos(); loadHandouts(); loadGradingList(); loadQnA(); loadVocab(); }
@@ -173,50 +190,66 @@
         async function togglePayment(id, status) { await dbClient.from('student_lessons').update({ payment_status: status === 'PAID' ? 'UNPAID' : 'PAID' }).eq('id', id); loadLessons(currentSelectedUser); }
         async function delLesson(id) { await dbClient.from('student_lessons').delete().eq('id', id); loadLessons(currentSelectedUser); }
 
-        // BÀI TẬP (THÊM NÚT XEM ĐỀ BÀI)
+        // BÀI TẬP (ASSIGNMENTS)
         let allAss = [];
         async function loadAssignments() { 
             const { data } = await dbClient.from('assignments').select('*').order('id', { ascending: false }); allAss = data || []; 
             document.getElementById('ass-list-container').innerHTML = allAss.map(a => `<div class="p-2 border rounded bg-gray-50 flex justify-between items-center"><div><span class="font-bold">[${a.ass_type||'WRITING'}] ${a.title}</span> <span class="text-xs text-gray-500">(${a.target_student})</span> <br><small class="text-gray-500">📅 ${a.assigned_date||'--'} | ⏰ ${a.deadline_date||'--'}</small></div> <div><button onclick="viewAss(${a.id})" class="bg-blue-100 text-blue-700 px-2 py-1 rounded border border-blue-300 mr-1 font-bold text-xs hover:bg-blue-200">👁️ Xem Đề</button><button onclick="editAss(${a.id})" class="bg-yellow-100 px-2 py-1 rounded border border-yellow-300 mr-1 text-xs hover:bg-yellow-200">Sửa</button><button onclick="delAss(${a.id})" class="bg-red-100 px-2 py-1 rounded border border-red-300 text-xs hover:bg-red-200">Xóa</button></div></div>`).join(''); 
         }
-        
-        // HÀM MỞ MODAL XEM ĐỀ BÀI
         function viewAss(id) {
             const a = allAss.find(x => x.id === id); if(!a) return;
             document.getElementById('view-ass-modal-title').innerText = `[${a.ass_type||'WRITING'}] ${a.title}`;
             document.getElementById('view-ass-content').innerText = a.content || 'Không có nội dung Text.';
             document.getElementById('view-ass-question').innerText = a.question_text || 'Không có nội dung Câu hỏi.';
-            
             const audioDiv = document.getElementById('view-ass-audio');
             if(a.audio_url) { audioDiv.classList.remove('hidden'); audioDiv.querySelector('source').src = a.audio_url; audioDiv.querySelector('audio').load(); } else { audioDiv.classList.add('hidden'); }
-            
             const imgEl = document.getElementById('view-ass-img');
             if(a.image_url) { imgEl.classList.remove('hidden'); imgEl.src = a.image_url; } else { imgEl.classList.add('hidden'); }
-            
             document.getElementById('view-ass-modal').classList.remove('hidden');
         }
-        function closeAssModal() { 
-            document.getElementById('view-ass-modal').classList.add('hidden'); 
-            const audio = document.getElementById('view-ass-audio').querySelector('audio'); if(audio) audio.pause(); 
-        }
+        function closeAssModal() { document.getElementById('view-ass-modal').classList.add('hidden'); const audio = document.getElementById('view-ass-audio').querySelector('audio'); if(audio) audio.pause(); }
 
         async function publishAss() { const id = document.getElementById('edit-ass-id').value; const payload = { target_student: document.getElementById('ass-target').value, ass_type: document.getElementById('ass-type').value, title: document.getElementById('ass-title').value, assigned_date: document.getElementById('ass-assigned-date').value, deadline_date: document.getElementById('ass-deadline-date').value, image_url: document.getElementById('ass-img-base64').value, audio_url: document.getElementById('ass-audio').value, content: document.getElementById('ass-content').value, question_text: document.getElementById('ass-question').value, timer_minutes: document.getElementById('ass-timer').value||40 }; if (id) { await dbClient.from('assignments').update(payload).eq('id', id); alert("✅ Cập nhật xong!"); cancelEditAss(); } else { await dbClient.from('assignments').insert([payload]); alert("✅ Đã giao bài!"); } loadAssignments(); }
         function editAss(id) { const a = allAss.find(x => x.id === id); if(!a) return; document.getElementById('edit-ass-id').value = a.id; document.getElementById('ass-target').value = a.target_student||'ALL'; document.getElementById('ass-type').value = a.ass_type||'WRITING'; document.getElementById('ass-title').value = a.title; document.getElementById('ass-assigned-date').value = a.assigned_date||''; document.getElementById('ass-deadline-date').value = a.deadline_date||''; document.getElementById('ass-audio').value = a.audio_url||''; document.getElementById('ass-content').value = a.content||''; document.getElementById('ass-question').value = a.question_text||''; document.getElementById('ass-img-base64').value = a.image_url||''; if(a.image_url){ document.getElementById('img-preview').src = a.image_url; document.getElementById('img-preview').classList.remove('hidden'); } document.getElementById('btn-publish-ass').innerText = "Cập nhật"; document.getElementById('btn-cancel-ass').classList.remove('hidden'); }
         function cancelEditAss() { document.getElementById('edit-ass-id').value = ''; document.getElementById('ass-question').value = ''; document.getElementById('btn-publish-ass').innerText = "Đăng Bài"; document.getElementById('btn-cancel-ass').classList.add('hidden'); }
         async function delAss(id) { if(confirm("Xóa?")) { await dbClient.from('assignments').delete().eq('id', id); loadAssignments(); } }
 
-        // QUẢN LÝ TỪ VỰNG & NÚT UP FILE CSV
+        // QUẢN LÝ TỪ VỰNG & XEM TRƯỚC
         document.getElementById('vocab-csv-file').addEventListener('change', function(e) {
             const file = e.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(evt) { document.getElementById('vocab-data').value = evt.target.result; };
-            reader.readAsText(file);
+            const reader = new FileReader(); reader.onload = function(evt) { document.getElementById('vocab-data').value = evt.target.result; }; reader.readAsText(file);
         });
 
-        async function loadVocab() { const { data } = await dbClient.from('vocab_quizzes').select('*').order('id', { ascending: false }); document.getElementById('vocab-list-container').innerHTML = (data||[]).map(v => `<div class="p-3 border rounded bg-white flex justify-between items-center shadow-sm"><div><span class="font-bold text-green-700">🎮 ${v.title}</span> <span class="text-xs text-gray-500">(${v.target_student})</span></div> <button onclick="delVocab(${v.id})" class="bg-red-200 px-3 py-1 rounded border text-xs font-bold text-red-700">Xóa</button></div>`).join(''); }
+        async function loadVocab() { 
+            const { data } = await dbClient.from('vocab_quizzes').select('*').order('id', { ascending: false }); 
+            allVocabQuizzes = data || [];
+            document.getElementById('vocab-list-container').innerHTML = allVocabQuizzes.map(v => `<div class="p-3 border rounded bg-white flex justify-between items-center shadow-sm"><div><span class="font-bold text-green-700">🎮 ${v.title}</span> <span class="text-xs text-gray-500">(${v.target_student})</span></div> <div><button onclick="viewVocab(${v.id})" class="bg-blue-100 text-blue-700 px-2 py-1 rounded border border-blue-300 mr-1 font-bold text-xs hover:bg-blue-200">👁️ Xem</button><button onclick="delVocab(${v.id})" class="bg-red-200 px-3 py-1 rounded border text-xs font-bold text-red-700">Xóa</button></div></div>`).join(''); 
+        }
+        
+        function viewVocab(id) {
+            const v = allVocabQuizzes.find(x => x.id === id); if(!v) return;
+            document.getElementById('view-vocab-modal-title').innerText = `Bộ từ vựng: ${v.title}`;
+            
+            const lines = v.quiz_data.split('\n');
+            let tableHtml = '';
+            let count = 1;
+            lines.forEach(line => {
+                if(line.trim() === '') return;
+                const parts = line.split('|').map(p => p.trim());
+                if(parts.length >= 2) {
+                    const wrongOpts = parts.slice(2).join(', ');
+                    tableHtml += `<tr><td class="p-2 border text-center">${count++}</td><td class="p-2 border font-semibold">${parts[0]}</td><td class="p-2 border font-bold text-green-600 bg-green-50">${parts[1]}</td><td class="p-2 border text-red-500 text-sm">${wrongOpts}</td></tr>`;
+                }
+            });
+            document.getElementById('view-vocab-body').innerHTML = tableHtml;
+            document.getElementById('view-vocab-modal').classList.remove('hidden');
+        }
+        function closeVocabModal() { document.getElementById('view-vocab-modal').classList.add('hidden'); }
+
         async function publishVocab() { const t = document.getElementById('vocab-title').value.trim(); const d = document.getElementById('vocab-data').value.trim(); if(!t || !d) return alert("Nhập đủ Tên bộ từ và Dữ liệu!"); const lines = d.split('\n'); if(lines[0].split('|').length < 2) return alert("Dữ liệu sai định dạng! Phải có ít nhất Câu hỏi | Đáp án"); await dbClient.from('vocab_quizzes').insert([{ target_student: document.getElementById('vocab-target').value, title: t, quiz_data: d }]); alert("✅ Đã tạo bộ Từ vựng!"); document.getElementById('vocab-title').value = ''; document.getElementById('vocab-data').value = ''; document.getElementById('vocab-csv-file').value = ''; loadVocab(); }
         async function delVocab(id) { if(confirm("Xóa bộ từ vựng này?")) { await dbClient.from('vocab_quizzes').delete().eq('id', id); loadVocab(); } }
 
+        // CÁC CHỨC NĂNG KHÁC 
         async function loadTodos() { const { data } = await dbClient.from('todos').select('*').order('id', { ascending: false }); document.getElementById('todo-list-container').innerHTML = (data||[]).map(t => `<div class="p-3 border rounded bg-white flex justify-between items-center shadow-sm"><div><span class="font-bold text-orange-700">📌 ${t.title}</span> <span class="text-xs text-gray-500">(${t.target_student})</span><br>${t.link_url ? `<a href="${t.link_url}" target="_blank" class="text-blue-500 underline text-xs">🔗 ${t.link_url}</a>`:''}</div> <button onclick="delTodo(${t.id})" class="bg-red-200 px-3 py-1 rounded border text-xs font-bold text-red-700">Xóa</button></div>`).join(''); }
         async function addTodo() { const t = document.getElementById('todo-title').value.trim(); if(!t) return alert("Nhập tên nhiệm vụ!"); await dbClient.from('todos').insert([{ target_student: document.getElementById('todo-target').value, title: t, link_url: document.getElementById('todo-url').value }]); alert("✅ Đã giao nhiệm vụ!"); document.getElementById('todo-title').value = ''; document.getElementById('todo-url').value = ''; loadTodos(); }
         async function delTodo(id) { if(confirm("Xóa nhiệm vụ này?")) { await dbClient.from('todos').delete().eq('id', id); loadTodos(); } }
