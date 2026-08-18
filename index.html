@@ -74,7 +74,7 @@
             <div id="tab-vocab" class="tab-content hidden">
                 <div id="vocab-list-view">
                     <h3 class="text-2xl font-bold text-green-600 mb-4">🎮 Thử Thách Từ Vựng</h3>
-                    <p class="text-gray-500 mb-6 italic text-sm">Cố gắng đạt 100% để qua bài nhé! Cứ sai là phải làm lại từ đầu đó 😈</p>
+                    <p class="text-gray-500 mb-6 italic text-sm">Hãy vào "👀 Ôn từ" để học thuộc trước khi làm Quiz nhé!</p>
                     <div id="vocab-card-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
 
@@ -87,7 +87,7 @@
                 </div>
             </div>
 
-            <!-- CÁC TAB CŨ -->
+            <!-- CÁC TAB KHÁC -->
             <div id="tab-todo" class="tab-content hidden"><h3 class="text-2xl font-bold text-orange-600 mb-4">🎯 Nhiệm vụ cần hoàn thành</h3><div id="student-todo-list" class="space-y-4"></div></div>
             <div id="tab-history" class="tab-content hidden"><div id="history-list-view"><h3 class="text-2xl font-bold text-green-600 mb-4">🗂️ Lịch sử Nộp Bài & Trả Bài</h3><div id="history-card-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></div><div id="history-detail-view" class="hidden"><div class="flex justify-between items-center mb-4 border-b pb-2"><div class="flex items-center"><button onclick="backToHistoryList()" class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm font-bold mr-3 hover:bg-gray-300">⬅ Quay lại</button><span id="hist-display-title" class="text-xl font-bold text-blue-700">Tiêu đề bài tập</span></div><div id="hist-display-score" class="font-bold bg-green-100 text-green-700 px-4 py-1 rounded-full border border-green-300">Điểm: --</div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="border rounded flex flex-col h-[500px]"><div class="bg-gray-100 p-2 border-b font-bold text-gray-700 text-sm">📄 Bài nộp gốc của bạn</div><div id="hist-original-content" class="p-4 bg-white flex-grow overflow-y-auto text-sm whitespace-pre-wrap text-gray-700"></div></div><div class="border rounded flex flex-col h-[500px]"><div class="bg-green-100 p-2 border-b font-bold text-green-800 text-sm">👩‍🏫 Nhận xét (Feedback)</div><div id="hist-feedback-content" class="p-4 bg-green-50 flex-grow overflow-y-auto text-sm leading-relaxed"></div></div></div></div></div>
             <div id="tab-qna" class="tab-content hidden"><div class="bg-orange-50 p-4 border rounded mb-6 flex gap-2"><input type="text" id="qna-question" placeholder="Nhập câu hỏi của bạn..." class="w-full p-2 border rounded outline-none"><button onclick="askQuestion()" class="btn-90s bg-orange-300 px-6 font-bold">Gửi</button></div><h4 class="font-bold text-lg mb-2">Lịch sử Hỏi - Đáp:</h4><div id="qna-student-list" class="space-y-4 max-h-[400px] overflow-y-auto"></div></div>
@@ -99,14 +99,34 @@
     <!-- KHÓA HẾT GIỜ -->
     <div id="timeout-overlay" class="fixed inset-0 bg-black bg-opacity-80 z-50 flex flex-col items-center justify-center hidden"><h2 class="text-5xl font-bold text-red-500 mb-4 animate-bounce">HẾT GIỜ!</h2><p class="text-white text-xl mb-6">Hệ thống đang tự động nộp bài...</p><div class="w-12 h-12 border-4 border-white border-t-red-500 rounded-full animate-spin"></div></div>
 
+    <!-- MODAL ÔN TỪ VỰNG CHO HỌC SINH -->
+    <div id="student-vocab-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            <div class="p-4 border-b flex justify-between items-center bg-yellow-50">
+                <h3 id="student-vocab-title" class="text-xl font-bold text-yellow-800">Danh sách từ vựng</h3>
+                <div>
+                    <button onclick="printVocab()" class="bg-blue-500 text-white px-4 py-1 rounded font-bold mr-2 hover:bg-blue-600 shadow">🖨️ In ra</button>
+                    <button onclick="closeStudentVocabModal()" class="text-gray-500 font-bold hover:text-red-500 text-2xl px-2">✖</button>
+                </div>
+            </div>
+            <div class="p-4 overflow-y-auto flex-grow bg-gray-50" id="print-vocab-area">
+                <table class="min-w-full text-left text-base border-collapse bg-white border border-gray-400 shadow-sm">
+                    <thead class="bg-gray-200 border-b-2 border-gray-400">
+                        <tr><th class="p-3 border border-gray-400 w-12 text-center">STT</th><th class="p-3 border border-gray-400">Từ vựng / Câu hỏi</th><th class="p-3 border border-gray-400 text-green-700">Ý nghĩa / Đáp án</th></tr>
+                    </thead>
+                    <tbody id="student-vocab-body">
+                        <!-- Nội dung render bằng JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script>
         const supabaseUrl = 'https://bcxjskvyromnrrtzqafu.supabase.co'; const supabaseKey = 'sb_publishable_4kpK2eA9PWZsXr0w2GHZYQ_Vq2hzkEO';
         let dbClient = null; let loggedInUser = null; let globalAssignments = []; let globalHistory = [];
         let timerInterval = null; let timeRemaining = 0;
-        
-        // MẢNG CHỨA DỮ LIỆU GAME TỪ VỰNG TỪ DB
-        let allVocabQuizzesForStudent = [];
-        let currentVocabQuiz = null; let vocabQuestions = []; let currentQuestionIndex = 0; let currentScore = 0;
+        let allVocabQuizzesForStudent = []; let currentVocabQuiz = null; let vocabQuestions = []; let currentQuestionIndex = 0; let currentScore = 0;
 
         window.addEventListener('DOMContentLoaded', () => { if (window.supabase) dbClient = window.supabase.createClient(supabaseUrl, supabaseKey); });
         
@@ -119,7 +139,6 @@
         document.getElementById('answer-box').addEventListener('paste', function(e) { if(((e.clipboardData || window.clipboardData).getData('text')).trim().split(/\s+/).length > 30) { document.getElementById('cheat-flag').value = "true"; document.getElementById('answer-box').classList.add('bg-red-50'); } });
         function autoSaveWork() { const assId = document.getElementById('current-ass-id').value; const content = document.getElementById('answer-box').value; const words = content.trim() === '' ? 0 : content.trim().split(/\s+/).length; document.getElementById('student-word-count').innerText = words; if(!assId) return; localStorage.setItem(`draft_${loggedInUser}_${assId}`, content); const status = document.getElementById('autosave-status'); status.classList.remove('hidden'); clearTimeout(window.saveTimeout); window.saveTimeout = setTimeout(() => status.classList.add('hidden'), 2000); }
 
-        // ĐĂNG NHẬP
         async function realLogin() {
             let u = loggedInUser || document.getElementById('username').value.trim(); let p = document.getElementById('password').value.trim();
             if(loggedInUser) p = (await dbClient.from('students').select('password').eq('username', u).single()).data.password;
@@ -134,14 +153,15 @@
             } else document.getElementById('login-error').classList.remove('hidden');
         }
 
-        // GAME TỪ VỰNG HỌC SINH (ĐÃ FIX LỖI NÚT BẤM)
+        // ==========================================
+        // GAME TỪ VỰNG & IN DANH SÁCH (MỚI)
+        // ==========================================
         async function loadVocabQuizzes(user) {
             const { data: quizzes } = await dbClient.from('vocab_quizzes').select('*').in('target_student', ['ALL', user]).order('id', { ascending: false });
             const { data: progresses } = await dbClient.from('vocab_progress').select('*').eq('username', user);
             const container = document.getElementById('vocab-card-container');
             if(!quizzes || quizzes.length === 0) { container.innerHTML = `<p class="col-span-3 text-gray-500 italic">Chưa có bài test từ vựng nào.</p>`; return; }
 
-            // Lưu vào mảng toàn cục để gọi hàm click không bị lỗi chuỗi
             allVocabQuizzesForStudent = quizzes;
 
             container.innerHTML = quizzes.map(q => {
@@ -149,33 +169,62 @@
                 const isPassed = prog && prog.is_passed;
                 const scoreText = prog ? `Max: ${prog.highest_score}%` : 'Chưa test';
                 const badge = isPassed ? `<span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold border border-green-300">✅ PASSED (100%)</span>` : `<span class="bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-xs font-bold border border-orange-300">⚠️ Chưa Pass (${scoreText})</span>`;
-                return `<div class="border-2 ${isPassed ? 'border-green-300 bg-green-50' : 'border-blue-200 bg-white'} rounded-xl p-5 shadow-sm flex flex-col justify-between transform transition hover:-translate-y-1 hover:shadow-md"><div class="mb-4"><div class="flex justify-between items-start mb-2"><span class="text-3xl">🧩</span></div><h4 class="font-bold text-gray-800 text-lg mb-2">${q.title}</h4>${badge}</div><button onclick="startVocabGame(${q.id})" class="btn-90s ${isPassed ? 'bg-green-200 text-green-800' : 'bg-blue-200 text-blue-800'} w-full py-2 font-bold">${isPassed ? 'Chơi Lại Cho Nhớ ➔' : 'Chiến Ngay ➔'}</button></div>`;
+                
+                return `
+                <div class="border-2 ${isPassed ? 'border-green-300 bg-green-50' : 'border-blue-200 bg-white'} rounded-xl p-5 shadow-sm flex flex-col justify-between transform transition hover:-translate-y-1 hover:shadow-md">
+                    <div class="mb-4">
+                        <div class="flex justify-between items-start mb-2"><span class="text-3xl">🧩</span></div>
+                        <h4 class="font-bold text-gray-800 text-lg mb-2">${q.title}</h4>
+                        ${badge}
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="previewVocabStudent(${q.id})" class="btn-90s bg-yellow-200 text-yellow-800 w-1/3 py-2 font-bold text-sm">👀 Ôn từ</button>
+                        <button onclick="startVocabGame(${q.id})" class="btn-90s ${isPassed ? 'bg-green-200 text-green-800' : 'bg-blue-200 text-blue-800'} w-2/3 py-2 font-bold text-sm">${isPassed ? 'Chơi Lại ➔' : 'Chiến Ngay ➔'}</button>
+                    </div>
+                </div>`;
             }).join('');
         }
 
-        // HÀM CHẠY GAME CHÍNH (Nhận ID thay vì chuỗi dài)
-        function startVocabGame(id) {
-            const quizData = allVocabQuizzesForStudent.find(q => q.id === id);
-            if (!quizData) return;
+        function previewVocabStudent(id) {
+            const v = allVocabQuizzesForStudent.find(x => x.id === id); if(!v) return;
+            document.getElementById('student-vocab-title').innerText = `Bộ từ vựng: ${v.title}`;
+            const lines = v.quiz_data.split('\n');
+            let tableHtml = ''; let count = 1;
+            lines.forEach(line => {
+                if(line.trim() === '') return;
+                const parts = line.split('|').map(p => p.trim());
+                if(parts.length >= 2) { tableHtml += `<tr><td class="p-3 border border-gray-400 text-center font-bold">${count++}</td><td class="p-3 border border-gray-400 font-semibold text-gray-800">${parts[0]}</td><td class="p-3 border border-gray-400 font-bold text-green-700">${parts[1]}</td></tr>`; }
+            });
+            document.getElementById('student-vocab-body').innerHTML = tableHtml;
+            document.getElementById('student-vocab-modal').classList.remove('hidden');
+        }
+        function closeStudentVocabModal() { document.getElementById('student-vocab-modal').classList.add('hidden'); }
 
-            currentVocabQuiz = id; 
-            document.getElementById('vocab-list-view').classList.add('hidden'); 
-            document.getElementById('vocab-play-view').classList.remove('hidden'); 
-            document.getElementById('main-tabs').classList.add('hidden'); 
-            document.getElementById('vocab-play-title').innerText = quizData.title;
-            
+        // Tính năng in (Print) cho Học sinh
+        function printVocab() {
+            const printContent = document.getElementById('print-vocab-area').innerHTML;
+            const title = document.getElementById('student-vocab-title').innerText;
+            const win = window.open('', '_blank');
+            win.document.write('<html><head><title>' + title + '</title>');
+            win.document.write('<style>body{font-family: sans-serif; padding: 20px;} table{width: 100%; border-collapse: collapse; margin-top: 20px;} th, td{border: 1px solid #000; padding: 10px; text-align: left;} th{background-color: #f0f0f0;}</style>');
+            win.document.write('</head><body>');
+            win.document.write('<h2 style="text-align:center; color: #1f2937;">' + title + '</h2>');
+            win.document.write(printContent);
+            win.document.write('</body></html>');
+            win.document.close();
+            win.focus();
+            setTimeout(() => { win.print(); win.close(); }, 500);
+        }
+
+        function startVocabGame(id) {
+            const quizData = allVocabQuizzesForStudent.find(q => q.id === id); if (!quizData) return;
+            currentVocabQuiz = id; document.getElementById('vocab-list-view').classList.add('hidden'); document.getElementById('vocab-play-view').classList.remove('hidden'); document.getElementById('main-tabs').classList.add('hidden'); document.getElementById('vocab-play-title').innerText = quizData.title;
             const lines = quizData.quiz_data.split('\n'); vocabQuestions = [];
             lines.forEach(line => {
                 if(line.trim() === '') return; const parts = line.split('|').map(p => p.trim());
                 if(parts.length >= 2) { vocabQuestions.push({ q: parts[0], correct: parts[1], options: shuffleArray(parts.slice(1)) }); }
             });
-            
-            vocabQuestions = shuffleArray(vocabQuestions); currentQuestionIndex = 0; currentScore = 0; 
-            document.getElementById('vocab-total-count').innerText = vocabQuestions.length; 
-            document.getElementById('vocab-result-box').classList.add('hidden'); 
-            document.getElementById('vocab-question-box').classList.remove('hidden'); 
-            document.getElementById('vocab-options-grid').classList.remove('hidden');
-            
+            vocabQuestions = shuffleArray(vocabQuestions); currentQuestionIndex = 0; currentScore = 0; document.getElementById('vocab-total-count').innerText = vocabQuestions.length; document.getElementById('vocab-result-box').classList.add('hidden'); document.getElementById('vocab-question-box').classList.remove('hidden'); document.getElementById('vocab-options-grid').classList.remove('hidden');
             renderNextVocabQuestion();
         }
 
@@ -184,19 +233,12 @@
             const currentQ = vocabQuestions[currentQuestionIndex]; document.getElementById('vocab-current-index').innerText = currentQuestionIndex + 1; document.getElementById('vocab-question-text').innerText = currentQ.q;
             const percent = (currentQuestionIndex / vocabQuestions.length) * 100; document.getElementById('vocab-progress-bar').style.width = percent + '%';
             const grid = document.getElementById('vocab-options-grid');
-            
-            // Xử lý Render Đáp án không truyền chuỗi quá dài vào hàm
-            grid.innerHTML = currentQ.options.map((opt, index) => { 
-                return `<button onclick="checkVocabAnswer(this, ${index})" class="quiz-option bg-white border-2 border-gray-300 rounded-lg p-4 text-left font-semibold text-gray-700 text-lg hover:border-blue-400 focus:outline-none"><span class="inline-block bg-gray-100 rounded px-2 py-1 mr-2 text-sm text-gray-500">${String.fromCharCode(65 + index)}</span>${opt.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</button>`; 
-            }).join('');
+            grid.innerHTML = currentQ.options.map((opt, index) => { return `<button onclick="checkVocabAnswer(this, ${index})" class="quiz-option bg-white border-2 border-gray-300 rounded-lg p-4 text-left font-semibold text-gray-700 text-lg hover:border-blue-400 focus:outline-none"><span class="inline-block bg-gray-100 rounded px-2 py-1 mr-2 text-sm text-gray-500">${String.fromCharCode(65 + index)}</span>${opt.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</button>`; }).join('');
         }
 
         function checkVocabAnswer(btnElement, optIndex) {
             const allBtns = document.getElementById('vocab-options-grid').querySelectorAll('button'); allBtns.forEach(b => b.disabled = true);
-            const currentQ = vocabQuestions[currentQuestionIndex]; 
-            const selectedAnswer = currentQ.options[optIndex]; // Lấy thẳng đáp án từ mảng, không lấy từ string HTML
-            const isCorrect = (selectedAnswer === currentQ.correct);
-            
+            const currentQ = vocabQuestions[currentQuestionIndex]; const selectedAnswer = currentQ.options[optIndex]; const isCorrect = (selectedAnswer === currentQ.correct);
             if(isCorrect) { btnElement.classList.add('quiz-correct'); currentScore++; setTimeout(() => { currentQuestionIndex++; renderNextVocabQuestion(); }, 800); } 
             else { btnElement.classList.add('quiz-wrong'); allBtns.forEach((b, i) => { if(currentQ.options[i] === currentQ.correct) b.classList.add('quiz-correct'); }); setTimeout(() => { endVocabGame(true); }, 1500); }
         }
@@ -214,12 +256,13 @@
         function backToVocabList() { document.getElementById('vocab-play-view').classList.add('hidden'); document.getElementById('vocab-list-view').classList.remove('hidden'); document.getElementById('main-tabs').classList.remove('hidden'); }
         function shuffleArray(array) { let curId = array.length; while (0 !== curId) { let randId = Math.floor(Math.random() * curId); curId -= 1; let tmp = array[curId]; array[curId] = array[randId]; array[randId] = tmp; } return array; }
 
-        // CÁC CHỨC NĂNG CŨ KHÁC
+        // ==========================================
+        // CÁC CHỨC NĂNG CŨ KHÁC BÊN DƯỚI NÀY VẪN GIỮ NGUYÊN
+        // ==========================================
         async function loadTracker(user) { const { data } = await dbClient.from('student_lessons').select('*').eq('username', user).order('id', { ascending: true }); document.getElementById('student-tracker-body').innerHTML = (data||[]).map(l => `<tr class="excel-row"><td class="excel-cell">${l.session_date}</td><td class="excel-cell whitespace-pre-wrap">${l.content}</td><td class="excel-cell ${l.payment_status==='PAID'?'text-green-700':'text-red-700'}">${l.payment_status==='PAID'?'Đã đóng':'Chưa đóng'}</td></tr>`).join(''); }
         async function loadHandouts(user) { const { data } = await dbClient.from('handouts').select('*').in('target_student', ['ALL', user]).order('id', { ascending: false }); document.getElementById('handouts-list').innerHTML = (data||[]).map(h => `<li class="p-4 bg-gray-50 border rounded flex justify-between"><span class="font-bold">📄 ${h.title}</span><a href="${h.file_url}" target="_blank" class="btn-90s bg-white px-4 py-1 text-sm">Mở File</a></li>`).join(''); }
         async function loadTodos(user) { const { data: todos } = await dbClient.from('todos').select('*').in('target_student', ['ALL', user]).order('id', { ascending: false }); const { data: dones } = await dbClient.from('todo_done').select('todo_id').eq('username', user); const doneIds = (dones||[]).map(d => d.todo_id); const container = document.getElementById('student-todo-list'); if(!todos || todos.length === 0) { container.innerHTML = `<p class="text-gray-500 italic">Hiện không có nhiệm vụ nào.</p>`; return; } container.innerHTML = todos.map(t => { const isDone = doneIds.includes(t.id); return `<div class="p-5 border-2 ${isDone ? 'border-green-300 bg-green-50 shadow-none' : 'border-orange-300 bg-white shadow-sm'} rounded-lg flex flex-col md:flex-row justify-between md:items-center gap-4 transition-all"><div><h4 class="text-lg font-bold ${isDone ? 'text-gray-500 line-through' : 'text-gray-900'}">📌 ${t.title}</h4>${t.link_url ? `<a href="${t.link_url}" target="_blank" class="text-blue-600 font-medium text-sm inline-block mt-2 bg-blue-50 px-3 py-1 rounded hover:bg-blue-100">🔗 Bấm vào đây để làm</a>` : ''}</div>${isDone ? `<span class="bg-green-200 text-green-800 px-4 py-2 rounded-full font-bold text-sm border border-green-400 self-start md:self-center">Đã xong ✅</span>` : `<button onclick="markTodoDone(${t.id})" class="btn-90s bg-orange-200 px-6 py-2 text-sm border-orange-500 font-bold self-start md:self-center">Đánh dấu xong ✔️</button>`}</div>`; }).join(''); }
         async function markTodoDone(id) { await dbClient.from('todo_done').insert([{ todo_id: id, username: loggedInUser }]); loadTodos(loggedInUser); }
-        
         async function loadAssignmentList(user) { const { data: assignments } = await dbClient.from('assignments').select('*').in('target_student', ['ALL', user]).order('id', { ascending: false }); globalAssignments = assignments || []; const { data: subs } = await dbClient.from('submissions').select('assignment_id').eq('username', user); const submittedIds = (subs || []).map(s => s.assignment_id); const container = document.getElementById('ass-card-container'); if(globalAssignments.length === 0) { container.innerHTML = `<p class="col-span-3 text-gray-500 italic border p-4 rounded bg-gray-50">Không có bài tập nào.</p>`; return; } container.innerHTML = globalAssignments.map(ass => { const isDone = submittedIds.includes(ass.id); const typeIcon = ass.ass_type === 'READING' ? '📖' : (ass.ass_type === 'LISTENING' ? '🎧' : '✍️'); const statusBadge = isDone ? `<span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full border border-green-300 font-bold">✅ Đã nộp</span>` : `<span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full border border-red-300 font-bold">⚠️ Chưa làm</span>`; const startStr = ass.assigned_date ? `📅 Giao: ${ass.assigned_date}` : ''; const deadStr = ass.deadline_date ? `⏰ Deadline: ${ass.deadline_date}` : ''; const dateHtml = (startStr || deadStr) ? `<div class="mt-2 text-xs font-bold text-red-600 bg-red-50 p-1 rounded inline-block border border-red-200">${startStr} &nbsp; ${deadStr}</div>` : ''; return `<div class="border-2 border-blue-200 rounded-lg p-5 bg-white shadow-sm flex flex-col justify-between hover:shadow-md transition"><div class="mb-4"><div class="flex justify-between items-start mb-2"><span class="text-2xl">${typeIcon}</span>${statusBadge}</div><h4 class="font-bold text-gray-800 text-lg mb-1 leading-tight">${ass.title}</h4><p class="text-sm text-gray-500">⏱ ${ass.timer_minutes} phút</p>${dateHtml}</div><button onclick="startAssignment(${ass.id})" class="btn-90s bg-blue-100 w-full py-2 text-blue-800 text-sm">Vào Làm Bài ➔</button></div>`; }).join(''); }
         function changeFontSize(sizeClass) { const el1 = document.getElementById('display-content'); const el2 = document.getElementById('answer-box'); el1.classList.remove('text-sm', 'text-base', 'text-lg'); el1.classList.add(sizeClass); el2.classList.remove('text-sm', 'text-base', 'text-lg'); el2.classList.add(sizeClass); } function changeTheme(themeClass) { const material = document.getElementById('ass-material'); material.classList.remove('theme-standard', 'theme-reading', 'theme-dark'); material.classList.add(themeClass); }
         function startTimer(minutes) { clearInterval(timerInterval); timeRemaining = minutes * 60; const timerDisplay = document.getElementById('display-timer'); const timerBox = document.getElementById('display-timer-box'); timerBox.className = "font-bold bg-green-100 text-green-700 px-4 py-2 rounded border border-green-300 text-lg flex items-center gap-2"; timerInterval = setInterval(() => { if (timeRemaining <= 0) { clearInterval(timerInterval); timerDisplay.innerText = "00:00"; forceSubmitWork(); return; } timeRemaining--; let m = Math.floor(timeRemaining / 60); let s = timeRemaining % 60; timerDisplay.innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`; if(timeRemaining === 300) { timerBox.className = "font-bold timer-warning px-4 py-2 rounded border text-lg flex items-center gap-2"; } }, 1000); }
@@ -232,6 +275,8 @@
         function backToHistoryList() { document.getElementById('history-detail-view').classList.add('hidden'); document.getElementById('history-list-view').classList.remove('hidden'); }
         async function loadQnA(user) { const { data } = await dbClient.from('qna').select('*').eq('username', user).order('created_at', { ascending: false }); document.getElementById('qna-student-list').innerHTML = (data||[]).map(q => `<div class="p-3 border rounded ${q.answer?'bg-green-50 border-green-300':'bg-gray-50'}"><p class="font-bold text-orange-600">Bạn hỏi:</p><p class="italic text-sm mb-2">${q.question}</p>${q.answer?`<p class="font-bold text-green-700">👩‍🏫 Trả lời:</p><p class="text-sm">${q.answer}</p>`:`<p class="text-xs text-gray-400">⏳ Đang chờ giáo viên phản hồi...</p>`}</div>`).join(''); }
         async function askQuestion() { const q = document.getElementById('qna-question').value.trim(); if(!q) return; await dbClient.from('qna').insert([{ username: loggedInUser, question: q }]); document.getElementById('qna-question').value = ''; loadQnA(loggedInUser); alert("✅ Đã gửi!"); }
+        async function loadErrorLog(user) { const { data } = await dbClient.from('error_logs').select('*').eq('username', user); const dataMap = {}; (data||[]).forEach(d => dataMap[d.row_index] = d); let html = ''; for(let i=1; i<=100; i++) { const row = dataMap[i] || { question:'', given_answer:'', wrong_choice:'', correct_answer:'' }; html += `<tr class="border-b"><td class="p-2 border-r text-center font-bold text-gray-500">${i}</td><td class="p-1 border-r"><textarea data-row="${i}" data-col="question" class="err-input w-full bg-transparent outline-none resize-none p-1" rows="2">${row.question}</textarea></td><td class="p-1 border-r"><textarea data-row="${i}" data-col="given_answer" class="err-input w-full bg-transparent outline-none resize-none p-1" rows="2">${row.given_answer}</textarea></td><td class="p-1 border-r"><textarea data-row="${i}" data-col="wrong_choice" class="err-input w-full text-red-500 font-bold outline-none resize-none p-1" rows="2">${row.wrong_choice}</textarea></td><td class="p-1"><textarea data-row="${i}" data-col="correct_answer" class="err-input w-full text-green-600 font-bold outline-none resize-none p-1" rows="2">${row.correct_answer}</textarea></td></tr>`; } document.getElementById('error-log-body').innerHTML = html; }
+        document.getElementById('error-table').addEventListener('change', async function(e) { if(e.target.classList.contains('err-input')) { const rowIndex = e.target.getAttribute('data-row'); const colName = e.target.getAttribute('data-col'); const val = e.target.value; const payload = { username: loggedInUser, row_index: parseInt(rowIndex) }; payload[colName] = val; await dbClient.from('error_logs').upsert(payload, { onConflict: 'username, row_index' }); } });
     </script>
 </body>
 </html>
