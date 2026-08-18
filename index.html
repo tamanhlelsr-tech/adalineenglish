@@ -12,6 +12,7 @@
         .torn-paper { background-color: #fff; position: relative; box-shadow: 4px 4px 0px rgba(0,0,0,0.1); border: 2px dashed #B39EB5; border-radius: 5px; transition: all 0.3s; }
         .btn-90s { background-color: #FDFD96; border: 2px solid #000; box-shadow: 3px 3px 0px #000; font-weight: 600; cursor: pointer; transition: all 0.1s; }
         .btn-90s:active { box-shadow: 0px 0px 0px #000; transform: translate(3px, 3px); }
+        .btn-90s:disabled { background-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; box-shadow: none; border-color: #d1d5db; }
         .hidden-page { display: none; }
         .excel-header { background-color: #D97A73; color: white; border: 1px solid #000; }
         .excel-row { background-color: #FAD4D4; border: 1px solid #000; }
@@ -24,11 +25,8 @@
         .quiz-option:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .quiz-correct { background-color: #4ade80 !important; color: white !important; border-color: #16a34a !important; animation: bounce 0.5s; }
         .quiz-wrong { background-color: #f87171 !important; color: white !important; border-color: #dc2626 !important; animation: shake 0.5s; }
-        
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        @keyframes progress { from { width: 0%; } }
-        
         .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #4ade80, #3b82f6); transition: width 0.3s ease; border-radius: 999px; }
         .confetti-bg { background-image: url('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExMjRlaHNjOWlveXBzbXBvd2JxaDRobWFpeHhwZGZwaXhqazZtd29tciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26tOZ42Mg6pbTUPHW/giphy.gif'); background-size: cover; background-position: center; }
     </style>
@@ -58,7 +56,6 @@
         <div class="flex flex-wrap gap-2 mb-4" id="main-tabs">
             <button onclick="switchTab('tab-tracker')" class="btn-90s bg-[#FFD1DC] px-4 py-2 rounded-t-lg">📅 Lịch Học</button>
             <button onclick="switchTab('tab-assignments')" class="btn-90s bg-[#AEC6CF] px-4 py-2 rounded-t-lg">📝 Làm Bài</button>
-            <!-- NÚT GAME TỪ VỰNG MỚI -->
             <button onclick="switchTab('tab-vocab')" class="btn-90s bg-[#B5EAD7] px-4 py-2 rounded-t-lg font-bold text-green-800">🎮 Game Từ Vựng</button>
             <button onclick="switchTab('tab-todo')" class="btn-90s bg-[#FFD1BA] px-4 py-2 rounded-t-lg">✅ To-Do List</button>
             <button onclick="switchTab('tab-history')" class="btn-90s bg-[#E2F0CB] px-4 py-2 rounded-t-lg">🗂️ Lịch Sử</button>
@@ -70,55 +67,31 @@
             
             <div id="tab-tracker" class="tab-content block"><div class="overflow-x-auto"><table class="min-w-full text-center border-collapse text-sm"><thead class="excel-header"><tr><th class="excel-cell w-2/12">BUỔI</th><th class="excel-cell w-8/12">NỘI DUNG</th><th class="excel-cell w-2/12">HỌC PHÍ</th></tr></thead><tbody id="student-tracker-body"></tbody></table></div></div>
 
-            <!-- BỎ QUA TAB ASSIGNMENT VÌ QUÁ DÀI, CODE VẪN GIỮ NGUYÊN -->
+            <!-- BÀI TẬP -->
             <div id="tab-assignments" class="tab-content hidden"><div id="ass-list-view"><h3 class="text-2xl font-bold text-blue-600 mb-4">📝 Danh sách Bài Tập</h3><div id="ass-card-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div></div><div id="ass-detail-view" class="hidden relative pb-16"><div class="flex justify-between items-center mb-4 border-b pb-2 sticky top-0 bg-white z-10 pt-2" id="exam-header"><div><button onclick="backToAssList()" id="btn-back" class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm font-bold mr-2 hover:bg-gray-300">⬅ Quay lại</button><span id="display-title" class="text-xl font-bold text-blue-700 hidden md:inline">Tiêu đề</span></div><div class="flex items-center gap-4"><div class="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded border text-xs"><label class="font-bold">A<span class="text-[10px]">A</span></label><select onchange="changeFontSize(this.value)" class="bg-transparent outline-none cursor-pointer"><option value="text-sm">Nhỏ</option><option value="text-base" selected>Vừa</option><option value="text-lg">Lớn</option></select><label class="font-bold ml-2">Màu:</label><select onchange="changeTheme(this.value)" class="bg-transparent outline-none cursor-pointer"><option value="theme-standard" selected>Chuẩn</option><option value="theme-reading">Sách cũ</option><option value="theme-dark">Tối</option></select></div><div id="display-timer-box" class="font-bold bg-green-100 text-green-700 px-4 py-2 rounded border border-green-300 text-lg flex items-center gap-2">⏱ <span id="display-timer">00:00</span></div></div></div><div id="ass-layout" class="flex flex-col gap-4"><div id="ass-material" class="w-full bg-gray-50 border rounded flex flex-col h-[600px] shadow-inner theme-standard transition-colors"><div class="bg-gray-200 border-b p-2 flex flex-wrap gap-2 items-center text-black"><span class="text-xs font-bold text-gray-600 mr-2">✏️ Nháp:</span><button onclick="formatPassage('hiliteColor', 'yellow')" class="px-2 py-1 bg-yellow-200 text-yellow-800 border border-yellow-400 font-bold text-xs rounded">⭐ Highlight</button><button onclick="formatPassage('underline')" class="px-2 py-1 bg-white border border-gray-400 font-bold text-xs rounded underline">Underline</button><button onclick="formatPassage('strikeThrough')" class="px-2 py-1 bg-white border border-gray-400 font-bold text-xs rounded line-through">Gạch bỏ</button><button onclick="formatPassage('foreColor', 'black'); formatPassage('hiliteColor', 'transparent'); formatPassage('underline', false); formatPassage('strikeThrough', false)" class="px-2 py-1 bg-gray-300 border border-gray-400 text-xs rounded">Tẩy</button></div><div class="p-4 overflow-y-auto flex-grow"><div id="audio-container" class="bg-blue-100 p-3 rounded mb-4 flex items-center gap-2 hidden text-black"><audio id="audio-player" controls class="flex-grow h-8 no-scrub" controlsList="nodownload noplaybackrate"><source id="audio-source" src=""></audio><span class="text-xs font-bold text-red-500 italic">*Nghe 1 lần</span></div><img id="display-image" src="" class="hidden w-full h-auto mb-4 border rounded"><div id="display-content" contenteditable="true" spellcheck="false" class="whitespace-pre-wrap text-base leading-relaxed outline-none transition-all">Nội dung...</div></div></div><div id="ass-workspace" class="w-full flex flex-col gap-2 h-[600px]"><input type="hidden" id="current-ass-id"><input type="hidden" id="cheat-flag" value="false"><div id="display-questions" class="hidden p-4 bg-pink-50 border border-pink-200 rounded text-sm whitespace-pre-wrap font-medium text-gray-800 max-h-[250px] overflow-y-auto mb-1 shadow-inner shrink-0"></div><div class="flex justify-between text-xs font-bold text-gray-500 px-1 mt-1"><span>Gõ bài vào đây <span class="text-blue-500 bg-blue-50 px-2 py-0.5 rounded border ml-2">Đã gõ: <span id="student-word-count">0</span> từ</span></span><span id="autosave-status" class="text-green-600 hidden">Đã lưu!</span></div><textarea id="answer-box" oninput="autoSaveWork()" class="w-full flex-grow border-2 border-blue-300 rounded p-4 outline-none focus:border-pink-500 text-base leading-relaxed overflow-y-auto resize-none transition-all"></textarea><div class="flex flex-wrap items-center gap-4 bg-yellow-50 p-2 border border-yellow-300 rounded shrink-0 text-black"><label class="font-bold text-xs text-yellow-800">File đính kèm:</label><input type="file" id="upload-file" class="text-xs cursor-pointer max-w-[200px]" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"><input type="hidden" id="upload-file-base64"></div><button id="btn-submit" onclick="submitWork(false)" class="btn-90s bg-green-300 py-2 mt-1 text-lg font-bold shrink-0">Nộp Bài 📤</button></div></div><div id="bottom-nav-bar" class="absolute bottom-0 left-0 right-0 h-14 bg-gray-200 border-t-2 border-gray-300 flex items-center px-4 overflow-x-auto gap-2 rounded-b hidden"><span class="text-xs font-bold text-gray-600 whitespace-nowrap mr-2">Questions:</span><div id="nav-buttons-container" class="flex gap-1"></div></div></div></div>
 
-            <!-- TAB GAME TỪ VỰNG (MỚI) -->
+            <!-- GAME TỪ VỰNG -->
             <div id="tab-vocab" class="tab-content hidden">
-                
-                <!-- BƯỚC 1: DANH SÁCH GAME -->
                 <div id="vocab-list-view">
                     <h3 class="text-2xl font-bold text-green-600 mb-4">🎮 Thử Thách Từ Vựng</h3>
                     <p class="text-gray-500 mb-6 italic text-sm">Cố gắng đạt 100% để qua bài nhé! Cứ sai là phải làm lại từ đầu đó 😈</p>
                     <div id="vocab-card-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
 
-                <!-- BƯỚC 2: GIAO DIỆN CHƠI GAME -->
                 <div id="vocab-play-view" class="hidden">
-                    <div class="flex justify-between items-center mb-6">
-                        <button onclick="backToVocabList()" class="text-gray-500 font-bold hover:text-gray-800">✖ Thoát</button>
-                        <h4 id="vocab-play-title" class="text-xl font-bold text-green-700">Tên Bài</h4>
-                        <div class="font-bold text-blue-600">Câu: <span id="vocab-current-index">1</span>/<span id="vocab-total-count">10</span></div>
-                    </div>
-
-                    <!-- Thanh tiến độ -->
-                    <div class="w-full bg-gray-200 rounded-full h-4 mb-8 border border-gray-300">
-                        <div id="vocab-progress-bar" class="progress-bar-fill w-0"></div>
-                    </div>
-
-                    <!-- Khung Câu hỏi -->
-                    <div id="vocab-question-box" class="bg-blue-50 border-2 border-blue-200 rounded-xl p-8 mb-8 text-center min-h-[150px] flex items-center justify-center shadow-sm">
-                        <h2 id="vocab-question-text" class="text-2xl md:text-3xl font-bold text-gray-800">Câu hỏi hiện ở đây</h2>
-                    </div>
-
-                    <!-- Lưới Đáp án -->
-                    <div id="vocab-options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Nút đáp án render = JS -->
-                    </div>
-
-                    <!-- Khung kết quả cuối cùng (Ẩn) -->
-                    <div id="vocab-result-box" class="hidden text-center py-10 rounded-xl border-4 mt-4">
-                        <h2 id="vocab-result-msg" class="text-4xl font-bold mb-4"></h2>
-                        <p id="vocab-result-sub" class="text-lg text-gray-600 mb-8"></p>
-                        <button onclick="backToVocabList()" class="btn-90s bg-green-300 px-8 py-3 text-lg font-bold">Về Menu Chính</button>
-                    </div>
+                    <div class="flex justify-between items-center mb-6"><button onclick="backToVocabList()" class="text-gray-500 font-bold hover:text-gray-800">✖ Thoát</button><h4 id="vocab-play-title" class="text-xl font-bold text-green-700">Tên Bài</h4><div class="font-bold text-blue-600">Câu: <span id="vocab-current-index">1</span>/<span id="vocab-total-count">10</span></div></div>
+                    <div class="w-full bg-gray-200 rounded-full h-4 mb-8 border border-gray-300"><div id="vocab-progress-bar" class="progress-bar-fill w-0"></div></div>
+                    <div id="vocab-question-box" class="bg-blue-50 border-2 border-blue-200 rounded-xl p-8 mb-8 text-center min-h-[150px] flex items-center justify-center shadow-sm"><h2 id="vocab-question-text" class="text-2xl md:text-3xl font-bold text-gray-800">Câu hỏi hiện ở đây</h2></div>
+                    <div id="vocab-options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    <div id="vocab-result-box" class="hidden text-center py-10 rounded-xl border-4 mt-4"><h2 id="vocab-result-msg" class="text-4xl font-bold mb-4"></h2><p id="vocab-result-sub" class="text-lg text-gray-600 mb-8"></p><button onclick="backToVocabList()" class="btn-90s bg-green-300 px-8 py-3 text-lg font-bold">Về Menu Chính</button></div>
                 </div>
             </div>
 
-            <!-- CÁC TAB CŨ GIỮ NGUYÊN -->
+            <!-- CÁC TAB CŨ -->
             <div id="tab-todo" class="tab-content hidden"><h3 class="text-2xl font-bold text-orange-600 mb-4">🎯 Nhiệm vụ cần hoàn thành</h3><div id="student-todo-list" class="space-y-4"></div></div>
             <div id="tab-history" class="tab-content hidden"><div id="history-list-view"><h3 class="text-2xl font-bold text-green-600 mb-4">🗂️ Lịch sử Nộp Bài & Trả Bài</h3><div id="history-card-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></div><div id="history-detail-view" class="hidden"><div class="flex justify-between items-center mb-4 border-b pb-2"><div class="flex items-center"><button onclick="backToHistoryList()" class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm font-bold mr-3 hover:bg-gray-300">⬅ Quay lại</button><span id="hist-display-title" class="text-xl font-bold text-blue-700">Tiêu đề bài tập</span></div><div id="hist-display-score" class="font-bold bg-green-100 text-green-700 px-4 py-1 rounded-full border border-green-300">Điểm: --</div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="border rounded flex flex-col h-[500px]"><div class="bg-gray-100 p-2 border-b font-bold text-gray-700 text-sm">📄 Bài nộp gốc của bạn</div><div id="hist-original-content" class="p-4 bg-white flex-grow overflow-y-auto text-sm whitespace-pre-wrap text-gray-700"></div></div><div class="border rounded flex flex-col h-[500px]"><div class="bg-green-100 p-2 border-b font-bold text-green-800 text-sm">👩‍🏫 Nhận xét (Feedback)</div><div id="hist-feedback-content" class="p-4 bg-green-50 flex-grow overflow-y-auto text-sm leading-relaxed"></div></div></div></div></div>
             <div id="tab-qna" class="tab-content hidden"><div class="bg-orange-50 p-4 border rounded mb-6 flex gap-2"><input type="text" id="qna-question" placeholder="Nhập câu hỏi của bạn..." class="w-full p-2 border rounded outline-none"><button onclick="askQuestion()" class="btn-90s bg-orange-300 px-6 font-bold">Gửi</button></div><h4 class="font-bold text-lg mb-2">Lịch sử Hỏi - Đáp:</h4><div id="qna-student-list" class="space-y-4 max-h-[400px] overflow-y-auto"></div></div>
+            <div id="tab-error" class="tab-content hidden"><p class="text-sm text-gray-500 mb-2 font-bold">Tự động lưu bảng lỗi vào hệ thống khi bạn gõ xong mỗi ô 💾</p><div class="overflow-x-auto h-[500px] border border-gray-300 shadow-inner"><table class="min-w-full bg-white text-left text-sm" id="error-table"><thead class="bg-gray-100 sticky top-0 border-b z-10"><tr><th class="p-2 border-r">No.</th><th class="p-2 border-r w-1/4">Question</th><th class="p-2 border-r w-1/5">Given Answer</th><th class="p-2 border-r w-1/5">Wrong Choice</th><th class="p-2">Correct Answer & Why</th></tr></thead><tbody id="error-log-body"></tbody></table></div></div>
             <div id="tab-handouts" class="tab-content hidden"><ul id="handouts-list" class="space-y-3"></ul></div>
         </div>
     </div>
@@ -130,18 +103,20 @@
         const supabaseUrl = 'https://bcxjskvyromnrrtzqafu.supabase.co'; const supabaseKey = 'sb_publishable_4kpK2eA9PWZsXr0w2GHZYQ_Vq2hzkEO';
         let dbClient = null; let loggedInUser = null; let globalAssignments = []; let globalHistory = [];
         let timerInterval = null; let timeRemaining = 0;
-
-        // Biến toàn cục cho Game Từ Vựng
-        let currentVocabQuiz = null;
-        let vocabQuestions = [];
-        let currentQuestionIndex = 0;
-        let currentScore = 0;
+        let currentVocabQuiz = null; let vocabQuestions = []; let currentQuestionIndex = 0; let currentScore = 0;
 
         window.addEventListener('DOMContentLoaded', () => { if (window.supabase) dbClient = window.supabase.createClient(supabaseUrl, supabaseKey); });
         
         function switchTab(id) { document.querySelectorAll('.tab-content').forEach(el => { el.classList.add('hidden'); el.classList.remove('block'); }); document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('block'); if(id === 'tab-assignments') { document.getElementById('ass-detail-view').classList.add('hidden'); document.getElementById('ass-list-view').classList.remove('hidden'); } if(id === 'tab-history') { document.getElementById('history-detail-view').classList.add('hidden'); document.getElementById('history-list-view').classList.remove('hidden'); } }
         function togglePass(id) { const el = document.getElementById(id); el.type = el.type === 'password' ? 'text' : 'password'; }
+        function formatPassage(cmd, val = null) { document.execCommand(cmd, false, val); document.getElementById('display-content').focus(); }
+        function formatDateTime(isoString) { if (!isoString) return '--'; const d = new Date(isoString); return d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'}); }
 
+        document.getElementById('upload-file').addEventListener('change', function(e) { const file = e.target.files[0]; if(file.size > 2*1024*1024) { alert("File quá lớn!"); this.value = ""; return; } const reader = new FileReader(); reader.onload = function(evt) { document.getElementById('upload-file-base64').value = evt.target.result; }; reader.readAsDataURL(file); });
+        document.getElementById('answer-box').addEventListener('paste', function(e) { if(((e.clipboardData || window.clipboardData).getData('text')).trim().split(/\s+/).length > 30) { document.getElementById('cheat-flag').value = "true"; document.getElementById('answer-box').classList.add('bg-red-50'); } });
+        function autoSaveWork() { const assId = document.getElementById('current-ass-id').value; const content = document.getElementById('answer-box').value; const words = content.trim() === '' ? 0 : content.trim().split(/\s+/).length; document.getElementById('student-word-count').innerText = words; if(!assId) return; localStorage.setItem(`draft_${loggedInUser}_${assId}`, content); const status = document.getElementById('autosave-status'); status.classList.remove('hidden'); clearTimeout(window.saveTimeout); window.saveTimeout = setTimeout(() => status.classList.add('hidden'), 2000); }
+
+        // ĐĂNG NHẬP
         async function realLogin() {
             let u = loggedInUser || document.getElementById('username').value.trim(); let p = document.getElementById('password').value.trim();
             if(loggedInUser) p = (await dbClient.from('students').select('password').eq('username', u).single()).data.password;
@@ -152,21 +127,15 @@
                 const meetBanner = document.getElementById('meet-banner'); const meetBtn = document.getElementById('meet-link-btn');
                 if(data[0].meet_link) { meetBtn.href = data[0].meet_link; meetBanner.classList.remove('hidden'); } else { meetBanner.classList.add('hidden'); }
                 
-                // Load đủ các tính năng
+                // GỌI ĐỦ TẤT CẢ CÁC HÀM TẢI DỮ LIỆU CỦA HỌC SINH
                 loadTracker(u); loadHandouts(u); loadAssignmentList(u); loadHistory(u); loadQnA(u); loadTodos(u); loadVocabQuizzes(u);
             } else document.getElementById('login-error').classList.remove('hidden');
         }
 
-        // ==========================================
-        // TÍNH NĂNG GAME TỪ VỰNG (MỚI CODE HOÀN TOÀN)
-        // ==========================================
-        
+        // GAME TỪ VỰNG HỌC SINH
         async function loadVocabQuizzes(user) {
-            // Lấy danh sách đề bài
             const { data: quizzes } = await dbClient.from('vocab_quizzes').select('*').in('target_student', ['ALL', user]).order('id', { ascending: false });
-            // Lấy tiến độ của học sinh
             const { data: progresses } = await dbClient.from('vocab_progress').select('*').eq('username', user);
-            
             const container = document.getElementById('vocab-card-container');
             if(!quizzes || quizzes.length === 0) { container.innerHTML = `<p class="col-span-3 text-gray-500 italic">Chưa có bài test từ vựng nào.</p>`; return; }
 
@@ -174,194 +143,56 @@
                 const prog = progresses.find(p => p.quiz_id === q.id);
                 const isPassed = prog && prog.is_passed;
                 const scoreText = prog ? `Max: ${prog.highest_score}%` : 'Chưa test';
-                const badge = isPassed 
-                    ? `<span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold border border-green-300">✅ PASSED (100%)</span>`
-                    : `<span class="bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-xs font-bold border border-orange-300">⚠️ Chưa Pass (${scoreText})</span>`;
-
-                return `
-                <div class="border-2 ${isPassed ? 'border-green-300 bg-green-50' : 'border-blue-200 bg-white'} rounded-xl p-5 shadow-sm flex flex-col justify-between transform transition hover:-translate-y-1 hover:shadow-md">
-                    <div class="mb-4">
-                        <div class="flex justify-between items-start mb-2"><span class="text-3xl">🧩</span></div>
-                        <h4 class="font-bold text-gray-800 text-lg mb-2">${q.title}</h4>
-                        ${badge}
-                    </div>
-                    <button onclick="startVocabGame(${q.id}, '${q.title}', \`${q.quiz_data.replace(/'/g, "\\'")}\`)" class="btn-90s ${isPassed ? 'bg-green-200 text-green-800' : 'bg-blue-200 text-blue-800'} w-full py-2 font-bold">${isPassed ? 'Chơi Lại Cho Nhớ ➔' : 'Chiến Ngay ➔'}</button>
-                </div>`;
+                const badge = isPassed ? `<span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold border border-green-300">✅ PASSED (100%)</span>` : `<span class="bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-xs font-bold border border-orange-300">⚠️ Chưa Pass (${scoreText})</span>`;
+                return `<div class="border-2 ${isPassed ? 'border-green-300 bg-green-50' : 'border-blue-200 bg-white'} rounded-xl p-5 shadow-sm flex flex-col justify-between transform transition hover:-translate-y-1 hover:shadow-md"><div class="mb-4"><div class="flex justify-between items-start mb-2"><span class="text-3xl">🧩</span></div><h4 class="font-bold text-gray-800 text-lg mb-2">${q.title}</h4>${badge}</div><button onclick="startVocabGame(${q.id}, '${q.title}', \`${q.quiz_data.replace(/'/g, "\\'")}\`)" class="btn-90s ${isPassed ? 'bg-green-200 text-green-800' : 'bg-blue-200 text-blue-800'} w-full py-2 font-bold">${isPassed ? 'Chơi Lại Cho Nhớ ➔' : 'Chiến Ngay ➔'}</button></div>`;
             }).join('');
         }
 
         function startVocabGame(id, title, csvData) {
-            currentVocabQuiz = id;
-            document.getElementById('vocab-list-view').classList.add('hidden');
-            document.getElementById('vocab-play-view').classList.remove('hidden');
-            document.getElementById('main-tabs').classList.add('hidden'); // Ẩn tab chính để tập trung
-            document.getElementById('vocab-play-title').innerText = title;
-
-            // Xử lý dữ liệu CSV
-            const lines = csvData.split('\n');
-            vocabQuestions = [];
-            
+            currentVocabQuiz = id; document.getElementById('vocab-list-view').classList.add('hidden'); document.getElementById('vocab-play-view').classList.remove('hidden'); document.getElementById('main-tabs').classList.add('hidden'); document.getElementById('vocab-play-title').innerText = title;
+            const lines = csvData.split('\n'); vocabQuestions = [];
             lines.forEach(line => {
-                if(line.trim() === '') return;
-                const parts = line.split('|').map(p => p.trim());
-                if(parts.length >= 2) {
-                    vocabQuestions.push({
-                        q: parts[0],
-                        correct: parts[1],
-                        options: shuffleArray(parts.slice(1)) // Trộn tất cả đáp án (bao gồm cả đáp án đúng)
-                    });
-                }
+                if(line.trim() === '') return; const parts = line.split('|').map(p => p.trim());
+                if(parts.length >= 2) { vocabQuestions.push({ q: parts[0], correct: parts[1], options: shuffleArray(parts.slice(1)) }); }
             });
-
-            // Trộn ngẫu nhiên danh sách câu hỏi
-            vocabQuestions = shuffleArray(vocabQuestions);
-
-            // Reset Game
-            currentQuestionIndex = 0;
-            currentScore = 0;
-            document.getElementById('vocab-total-count').innerText = vocabQuestions.length;
-            document.getElementById('vocab-result-box').classList.add('hidden');
-            document.getElementById('vocab-question-box').classList.remove('hidden');
-            document.getElementById('vocab-options-grid').classList.remove('hidden');
-            
+            vocabQuestions = shuffleArray(vocabQuestions); currentQuestionIndex = 0; currentScore = 0; document.getElementById('vocab-total-count').innerText = vocabQuestions.length; document.getElementById('vocab-result-box').classList.add('hidden'); document.getElementById('vocab-question-box').classList.remove('hidden'); document.getElementById('vocab-options-grid').classList.remove('hidden');
             renderNextVocabQuestion();
         }
 
         function renderNextVocabQuestion() {
-            if(currentQuestionIndex >= vocabQuestions.length) {
-                endVocabGame(); return;
-            }
-
-            const currentQ = vocabQuestions[currentQuestionIndex];
-            document.getElementById('vocab-current-index').innerText = currentQuestionIndex + 1;
-            document.getElementById('vocab-question-text').innerText = currentQ.q;
-            
-            // Cập nhật thanh tiến độ
-            const percent = (currentQuestionIndex / vocabQuestions.length) * 100;
-            document.getElementById('vocab-progress-bar').style.width = percent + '%';
-
-            // Hiển thị đáp án
+            if(currentQuestionIndex >= vocabQuestions.length) { endVocabGame(); return; }
+            const currentQ = vocabQuestions[currentQuestionIndex]; document.getElementById('vocab-current-index').innerText = currentQuestionIndex + 1; document.getElementById('vocab-question-text').innerText = currentQ.q;
+            const percent = (currentQuestionIndex / vocabQuestions.length) * 100; document.getElementById('vocab-progress-bar').style.width = percent + '%';
             const grid = document.getElementById('vocab-options-grid');
-            grid.innerHTML = currentQ.options.map((opt, index) => {
-                // Escape chuỗi an toàn
-                const safeOpt = opt.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                return `<button onclick="checkVocabAnswer(this, '${safeOpt}')" class="quiz-option bg-white border-2 border-gray-300 rounded-lg p-4 text-left font-semibold text-gray-700 text-lg hover:border-blue-400 focus:outline-none">
-                    <span class="inline-block bg-gray-100 rounded px-2 py-1 mr-2 text-sm text-gray-500">${String.fromCharCode(65 + index)}</span>
-                    ${opt}
-                </button>`;
-            }).join('');
+            grid.innerHTML = currentQ.options.map((opt, index) => { const safeOpt = opt.replace(/'/g, "\\'").replace(/"/g, '&quot;'); return `<button onclick="checkVocabAnswer(this, '${safeOpt}')" class="quiz-option bg-white border-2 border-gray-300 rounded-lg p-4 text-left font-semibold text-gray-700 text-lg hover:border-blue-400 focus:outline-none"><span class="inline-block bg-gray-100 rounded px-2 py-1 mr-2 text-sm text-gray-500">${String.fromCharCode(65 + index)}</span>${opt}</button>`; }).join('');
         }
 
         function checkVocabAnswer(btnElement, selectedAnswer) {
-            // Vô hiệu hóa tất cả các nút để chống bấm đúp
-            const allBtns = document.getElementById('vocab-options-grid').querySelectorAll('button');
-            allBtns.forEach(b => b.disabled = true);
-
-            const currentQ = vocabQuestions[currentQuestionIndex];
-            const isCorrect = (selectedAnswer === currentQ.correct);
-
-            if(isCorrect) {
-                btnElement.classList.add('quiz-correct');
-                currentScore++;
-                
-                // Đợi nửa giây rồi sang câu tiếp
-                setTimeout(() => {
-                    currentQuestionIndex++;
-                    renderNextVocabQuestion();
-                }, 800);
-            } else {
-                btnElement.classList.add('quiz-wrong');
-                
-                // Tìm nút đúng và bôi xanh để nhắc học sinh
-                allBtns.forEach(b => {
-                    if(b.innerText.includes(currentQ.correct)) b.classList.add('quiz-correct');
-                });
-
-                // Dừng cuộc chơi luôn vì quy tắc là phải 100%
-                setTimeout(() => {
-                    endVocabGame(true); // Trạng thái "Tạch"
-                }, 1500);
-            }
+            const allBtns = document.getElementById('vocab-options-grid').querySelectorAll('button'); allBtns.forEach(b => b.disabled = true);
+            const currentQ = vocabQuestions[currentQuestionIndex]; const isCorrect = (selectedAnswer === currentQ.correct);
+            if(isCorrect) { btnElement.classList.add('quiz-correct'); currentScore++; setTimeout(() => { currentQuestionIndex++; renderNextVocabQuestion(); }, 800); } 
+            else { btnElement.classList.add('quiz-wrong'); allBtns.forEach(b => { if(b.innerText.includes(currentQ.correct)) b.classList.add('quiz-correct'); }); setTimeout(() => { endVocabGame(true); }, 1500); }
         }
 
         async function endVocabGame(failedEarly = false) {
-            document.getElementById('vocab-question-box').classList.add('hidden');
-            document.getElementById('vocab-options-grid').classList.add('hidden');
-            const resultBox = document.getElementById('vocab-result-box');
-            resultBox.classList.remove('hidden');
-            
-            // Kéo thanh tiến độ full nếu làm hết
+            document.getElementById('vocab-question-box').classList.add('hidden'); document.getElementById('vocab-options-grid').classList.add('hidden'); const resultBox = document.getElementById('vocab-result-box'); resultBox.classList.remove('hidden');
             if(!failedEarly) document.getElementById('vocab-progress-bar').style.width = '100%';
-
-            const total = vocabQuestions.length;
-            const percentScore = Math.round((currentScore / total) * 100);
-            
-            const msgEl = document.getElementById('vocab-result-msg');
-            const subEl = document.getElementById('vocab-result-sub');
-
-            if (!failedEarly && currentScore === total) {
-                // CHÚC MỪNG 100%
-                msgEl.innerText = "🎉 XUẤT SẮC! PASSED 🎉";
-                msgEl.className = "text-5xl font-bold mb-4 text-green-600";
-                subEl.innerText = `Bạn đã đạt 100% (${currentScore}/${total}). Trí nhớ siêu phàm!`;
-                resultBox.className = "text-center py-10 rounded-xl border-4 border-green-400 bg-green-50 confetti-bg";
-                
-                // Lưu Database là Passed
-                await dbClient.from('vocab_progress').upsert({
-                    username: loggedInUser,
-                    quiz_id: currentVocabQuiz,
-                    is_passed: true,
-                    highest_score: 100
-                }, { onConflict: 'username, quiz_id' });
-
-            } else {
-                // TẠCH
-                msgEl.innerText = "💥 Ò Ó O... TẠCH RỒI!";
-                msgEl.className = "text-4xl font-bold mb-4 text-red-500";
-                subEl.innerHTML = `Bạn sai ở câu thứ <b>${currentQuestionIndex + 1}</b>.<br>Luật chơi là phải ĐÚNG 100% mới qua màn. Hãy làm lại nhé!`;
-                resultBox.className = "text-center py-10 rounded-xl border-4 border-red-400 bg-red-50";
-
-                // Lưu Database điểm cao nhất (nếu chưa pass)
-                const { data: oldProg } = await dbClient.from('vocab_progress').select('highest_score').eq('username', loggedInUser).eq('quiz_id', currentVocabQuiz).single();
-                const oldHigh = oldProg ? oldProg.highest_score : 0;
-                
-                if (percentScore > oldHigh) {
-                    await dbClient.from('vocab_progress').upsert({
-                        username: loggedInUser,
-                        quiz_id: currentVocabQuiz,
-                        highest_score: percentScore
-                    }, { onConflict: 'username, quiz_id' });
-                }
-            }
-
-            // Load lại danh sách ngoài kia để cập nhật huy hiệu
+            const total = vocabQuestions.length; const percentScore = Math.round((currentScore / total) * 100);
+            const msgEl = document.getElementById('vocab-result-msg'); const subEl = document.getElementById('vocab-result-sub');
+            if (!failedEarly && currentScore === total) { msgEl.innerText = "🎉 XUẤT SẮC! PASSED 🎉"; msgEl.className = "text-5xl font-bold mb-4 text-green-600"; subEl.innerText = `Bạn đã đạt 100% (${currentScore}/${total}). Trí nhớ siêu phàm!`; resultBox.className = "text-center py-10 rounded-xl border-4 border-green-400 bg-green-50 confetti-bg"; await dbClient.from('vocab_progress').upsert({ username: loggedInUser, quiz_id: currentVocabQuiz, is_passed: true, highest_score: 100 }, { onConflict: 'username, quiz_id' }); } 
+            else { msgEl.innerText = "💥 Ò Ó O... TẠCH RỒI!"; msgEl.className = "text-4xl font-bold mb-4 text-red-500"; subEl.innerHTML = `Bạn sai ở câu thứ <b>${currentQuestionIndex + 1}</b>.<br>Luật chơi là phải ĐÚNG 100% mới qua màn. Hãy làm lại nhé!`; resultBox.className = "text-center py-10 rounded-xl border-4 border-red-400 bg-red-50"; const { data: oldProg } = await dbClient.from('vocab_progress').select('highest_score').eq('username', loggedInUser).eq('quiz_id', currentVocabQuiz).single(); const oldHigh = oldProg ? oldProg.highest_score : 0; if (percentScore > oldHigh) { await dbClient.from('vocab_progress').upsert({ username: loggedInUser, quiz_id: currentVocabQuiz, highest_score: percentScore }, { onConflict: 'username, quiz_id' }); } }
             loadVocabQuizzes(loggedInUser);
         }
 
-        function backToVocabList() {
-            document.getElementById('vocab-play-view').classList.add('hidden');
-            document.getElementById('vocab-list-view').classList.remove('hidden');
-            document.getElementById('main-tabs').classList.remove('hidden');
-        }
+        function backToVocabList() { document.getElementById('vocab-play-view').classList.add('hidden'); document.getElementById('vocab-list-view').classList.remove('hidden'); document.getElementById('main-tabs').classList.remove('hidden'); }
+        function shuffleArray(array) { let curId = array.length; while (0 !== curId) { let randId = Math.floor(Math.random() * curId); curId -= 1; let tmp = array[curId]; array[curId] = array[randId]; array[randId] = tmp; } return array; }
 
-        // Hàm trộn mảng (Fisher-Yates Shuffle)
-        function shuffleArray(array) {
-            let curId = array.length;
-            while (0 !== curId) {
-                let randId = Math.floor(Math.random() * curId); curId -= 1;
-                let tmp = array[curId]; array[curId] = array[randId]; array[randId] = tmp;
-            }
-            return array;
-        }
-
-        // ==========================================
-        // CÁC HÀM CŨ GIỮ NGUYÊN (TO-DO, BÀI TẬP...)
-        // ==========================================
-        
+        // CÁC CHỨC NĂNG CŨ (BÀI TẬP, TODOS...)
         async function loadTracker(user) { const { data } = await dbClient.from('student_lessons').select('*').eq('username', user).order('id', { ascending: true }); document.getElementById('student-tracker-body').innerHTML = (data||[]).map(l => `<tr class="excel-row"><td class="excel-cell">${l.session_date}</td><td class="excel-cell whitespace-pre-wrap">${l.content}</td><td class="excel-cell ${l.payment_status==='PAID'?'text-green-700':'text-red-700'}">${l.payment_status==='PAID'?'Đã đóng':'Chưa đóng'}</td></tr>`).join(''); }
         async function loadHandouts(user) { const { data } = await dbClient.from('handouts').select('*').in('target_student', ['ALL', user]).order('id', { ascending: false }); document.getElementById('handouts-list').innerHTML = (data||[]).map(h => `<li class="p-4 bg-gray-50 border rounded flex justify-between"><span class="font-bold">📄 ${h.title}</span><a href="${h.file_url}" target="_blank" class="btn-90s bg-white px-4 py-1 text-sm">Mở File</a></li>`).join(''); }
         async function loadTodos(user) { const { data: todos } = await dbClient.from('todos').select('*').in('target_student', ['ALL', user]).order('id', { ascending: false }); const { data: dones } = await dbClient.from('todo_done').select('todo_id').eq('username', user); const doneIds = (dones||[]).map(d => d.todo_id); const container = document.getElementById('student-todo-list'); if(!todos || todos.length === 0) { container.innerHTML = `<p class="text-gray-500 italic">Hiện không có nhiệm vụ nào.</p>`; return; } container.innerHTML = todos.map(t => { const isDone = doneIds.includes(t.id); return `<div class="p-5 border-2 ${isDone ? 'border-green-300 bg-green-50 shadow-none' : 'border-orange-300 bg-white shadow-sm'} rounded-lg flex flex-col md:flex-row justify-between md:items-center gap-4 transition-all"><div><h4 class="text-lg font-bold ${isDone ? 'text-gray-500 line-through' : 'text-gray-900'}">📌 ${t.title}</h4>${t.link_url ? `<a href="${t.link_url}" target="_blank" class="text-blue-600 font-medium text-sm inline-block mt-2 bg-blue-50 px-3 py-1 rounded hover:bg-blue-100">🔗 Bấm vào đây để làm</a>` : ''}</div>${isDone ? `<span class="bg-green-200 text-green-800 px-4 py-2 rounded-full font-bold text-sm border border-green-400 self-start md:self-center">Đã xong ✅</span>` : `<button onclick="markTodoDone(${t.id})" class="btn-90s bg-orange-200 px-6 py-2 text-sm border-orange-500 font-bold self-start md:self-center">Đánh dấu xong ✔️</button>`}</div>`; }).join(''); }
         async function markTodoDone(id) { await dbClient.from('todo_done').insert([{ todo_id: id, username: loggedInUser }]); loadTodos(loggedInUser); }
+        
         async function loadAssignmentList(user) { const { data: assignments } = await dbClient.from('assignments').select('*').in('target_student', ['ALL', user]).order('id', { ascending: false }); globalAssignments = assignments || []; const { data: subs } = await dbClient.from('submissions').select('assignment_id').eq('username', user); const submittedIds = (subs || []).map(s => s.assignment_id); const container = document.getElementById('ass-card-container'); if(globalAssignments.length === 0) { container.innerHTML = `<p class="col-span-3 text-gray-500 italic border p-4 rounded bg-gray-50">Không có bài tập nào.</p>`; return; } container.innerHTML = globalAssignments.map(ass => { const isDone = submittedIds.includes(ass.id); const typeIcon = ass.ass_type === 'READING' ? '📖' : (ass.ass_type === 'LISTENING' ? '🎧' : '✍️'); const statusBadge = isDone ? `<span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full border border-green-300 font-bold">✅ Đã nộp</span>` : `<span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full border border-red-300 font-bold">⚠️ Chưa làm</span>`; const startStr = ass.assigned_date ? `📅 Giao: ${ass.assigned_date}` : ''; const deadStr = ass.deadline_date ? `⏰ Deadline: ${ass.deadline_date}` : ''; const dateHtml = (startStr || deadStr) ? `<div class="mt-2 text-xs font-bold text-red-600 bg-red-50 p-1 rounded inline-block border border-red-200">${startStr} &nbsp; ${deadStr}</div>` : ''; return `<div class="border-2 border-blue-200 rounded-lg p-5 bg-white shadow-sm flex flex-col justify-between hover:shadow-md transition"><div class="mb-4"><div class="flex justify-between items-start mb-2"><span class="text-2xl">${typeIcon}</span>${statusBadge}</div><h4 class="font-bold text-gray-800 text-lg mb-1 leading-tight">${ass.title}</h4><p class="text-sm text-gray-500">⏱ ${ass.timer_minutes} phút</p>${dateHtml}</div><button onclick="startAssignment(${ass.id})" class="btn-90s bg-blue-100 w-full py-2 text-blue-800 text-sm">Vào Làm Bài ➔</button></div>`; }).join(''); }
         function changeFontSize(sizeClass) { const el1 = document.getElementById('display-content'); const el2 = document.getElementById('answer-box'); el1.classList.remove('text-sm', 'text-base', 'text-lg'); el1.classList.add(sizeClass); el2.classList.remove('text-sm', 'text-base', 'text-lg'); el2.classList.add(sizeClass); } function changeTheme(themeClass) { const material = document.getElementById('ass-material'); material.classList.remove('theme-standard', 'theme-reading', 'theme-dark'); material.classList.add(themeClass); }
         function startTimer(minutes) { clearInterval(timerInterval); timeRemaining = minutes * 60; const timerDisplay = document.getElementById('display-timer'); const timerBox = document.getElementById('display-timer-box'); timerBox.className = "font-bold bg-green-100 text-green-700 px-4 py-2 rounded border border-green-300 text-lg flex items-center gap-2"; timerInterval = setInterval(() => { if (timeRemaining <= 0) { clearInterval(timerInterval); timerDisplay.innerText = "00:00"; forceSubmitWork(); return; } timeRemaining--; let m = Math.floor(timeRemaining / 60); let s = timeRemaining % 60; timerDisplay.innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`; if(timeRemaining === 300) { timerBox.className = "font-bold timer-warning px-4 py-2 rounded border text-lg flex items-center gap-2"; } }, 1000); }
