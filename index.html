@@ -103,6 +103,9 @@
         const supabaseUrl = 'https://bcxjskvyromnrrtzqafu.supabase.co'; const supabaseKey = 'sb_publishable_4kpK2eA9PWZsXr0w2GHZYQ_Vq2hzkEO';
         let dbClient = null; let loggedInUser = null; let globalAssignments = []; let globalHistory = [];
         let timerInterval = null; let timeRemaining = 0;
+        
+        // MẢNG CHỨA DỮ LIỆU GAME TỪ VỰNG TỪ DB
+        let allVocabQuizzesForStudent = [];
         let currentVocabQuiz = null; let vocabQuestions = []; let currentQuestionIndex = 0; let currentScore = 0;
 
         window.addEventListener('DOMContentLoaded', () => { if (window.supabase) dbClient = window.supabase.createClient(supabaseUrl, supabaseKey); });
@@ -127,35 +130,52 @@
                 const meetBanner = document.getElementById('meet-banner'); const meetBtn = document.getElementById('meet-link-btn');
                 if(data[0].meet_link) { meetBtn.href = data[0].meet_link; meetBanner.classList.remove('hidden'); } else { meetBanner.classList.add('hidden'); }
                 
-                // GỌI ĐỦ TẤT CẢ CÁC HÀM TẢI DỮ LIỆU CỦA HỌC SINH
                 loadTracker(u); loadHandouts(u); loadAssignmentList(u); loadHistory(u); loadQnA(u); loadTodos(u); loadVocabQuizzes(u);
             } else document.getElementById('login-error').classList.remove('hidden');
         }
 
-        // GAME TỪ VỰNG HỌC SINH
+        // GAME TỪ VỰNG HỌC SINH (ĐÃ FIX LỖI NÚT BẤM)
         async function loadVocabQuizzes(user) {
             const { data: quizzes } = await dbClient.from('vocab_quizzes').select('*').in('target_student', ['ALL', user]).order('id', { ascending: false });
             const { data: progresses } = await dbClient.from('vocab_progress').select('*').eq('username', user);
             const container = document.getElementById('vocab-card-container');
             if(!quizzes || quizzes.length === 0) { container.innerHTML = `<p class="col-span-3 text-gray-500 italic">Chưa có bài test từ vựng nào.</p>`; return; }
 
+            // Lưu vào mảng toàn cục để gọi hàm click không bị lỗi chuỗi
+            allVocabQuizzesForStudent = quizzes;
+
             container.innerHTML = quizzes.map(q => {
                 const prog = progresses.find(p => p.quiz_id === q.id);
                 const isPassed = prog && prog.is_passed;
                 const scoreText = prog ? `Max: ${prog.highest_score}%` : 'Chưa test';
                 const badge = isPassed ? `<span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold border border-green-300">✅ PASSED (100%)</span>` : `<span class="bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-xs font-bold border border-orange-300">⚠️ Chưa Pass (${scoreText})</span>`;
-                return `<div class="border-2 ${isPassed ? 'border-green-300 bg-green-50' : 'border-blue-200 bg-white'} rounded-xl p-5 shadow-sm flex flex-col justify-between transform transition hover:-translate-y-1 hover:shadow-md"><div class="mb-4"><div class="flex justify-between items-start mb-2"><span class="text-3xl">🧩</span></div><h4 class="font-bold text-gray-800 text-lg mb-2">${q.title}</h4>${badge}</div><button onclick="startVocabGame(${q.id}, '${q.title}', \`${q.quiz_data.replace(/'/g, "\\'")}\`)" class="btn-90s ${isPassed ? 'bg-green-200 text-green-800' : 'bg-blue-200 text-blue-800'} w-full py-2 font-bold">${isPassed ? 'Chơi Lại Cho Nhớ ➔' : 'Chiến Ngay ➔'}</button></div>`;
+                return `<div class="border-2 ${isPassed ? 'border-green-300 bg-green-50' : 'border-blue-200 bg-white'} rounded-xl p-5 shadow-sm flex flex-col justify-between transform transition hover:-translate-y-1 hover:shadow-md"><div class="mb-4"><div class="flex justify-between items-start mb-2"><span class="text-3xl">🧩</span></div><h4 class="font-bold text-gray-800 text-lg mb-2">${q.title}</h4>${badge}</div><button onclick="startVocabGame(${q.id})" class="btn-90s ${isPassed ? 'bg-green-200 text-green-800' : 'bg-blue-200 text-blue-800'} w-full py-2 font-bold">${isPassed ? 'Chơi Lại Cho Nhớ ➔' : 'Chiến Ngay ➔'}</button></div>`;
             }).join('');
         }
 
-        function startVocabGame(id, title, csvData) {
-            currentVocabQuiz = id; document.getElementById('vocab-list-view').classList.add('hidden'); document.getElementById('vocab-play-view').classList.remove('hidden'); document.getElementById('main-tabs').classList.add('hidden'); document.getElementById('vocab-play-title').innerText = title;
-            const lines = csvData.split('\n'); vocabQuestions = [];
+        // HÀM CHẠY GAME CHÍNH (Nhận ID thay vì chuỗi dài)
+        function startVocabGame(id) {
+            const quizData = allVocabQuizzesForStudent.find(q => q.id === id);
+            if (!quizData) return;
+
+            currentVocabQuiz = id; 
+            document.getElementById('vocab-list-view').classList.add('hidden'); 
+            document.getElementById('vocab-play-view').classList.remove('hidden'); 
+            document.getElementById('main-tabs').classList.add('hidden'); 
+            document.getElementById('vocab-play-title').innerText = quizData.title;
+            
+            const lines = quizData.quiz_data.split('\n'); vocabQuestions = [];
             lines.forEach(line => {
                 if(line.trim() === '') return; const parts = line.split('|').map(p => p.trim());
                 if(parts.length >= 2) { vocabQuestions.push({ q: parts[0], correct: parts[1], options: shuffleArray(parts.slice(1)) }); }
             });
-            vocabQuestions = shuffleArray(vocabQuestions); currentQuestionIndex = 0; currentScore = 0; document.getElementById('vocab-total-count').innerText = vocabQuestions.length; document.getElementById('vocab-result-box').classList.add('hidden'); document.getElementById('vocab-question-box').classList.remove('hidden'); document.getElementById('vocab-options-grid').classList.remove('hidden');
+            
+            vocabQuestions = shuffleArray(vocabQuestions); currentQuestionIndex = 0; currentScore = 0; 
+            document.getElementById('vocab-total-count').innerText = vocabQuestions.length; 
+            document.getElementById('vocab-result-box').classList.add('hidden'); 
+            document.getElementById('vocab-question-box').classList.remove('hidden'); 
+            document.getElementById('vocab-options-grid').classList.remove('hidden');
+            
             renderNextVocabQuestion();
         }
 
@@ -164,14 +184,21 @@
             const currentQ = vocabQuestions[currentQuestionIndex]; document.getElementById('vocab-current-index').innerText = currentQuestionIndex + 1; document.getElementById('vocab-question-text').innerText = currentQ.q;
             const percent = (currentQuestionIndex / vocabQuestions.length) * 100; document.getElementById('vocab-progress-bar').style.width = percent + '%';
             const grid = document.getElementById('vocab-options-grid');
-            grid.innerHTML = currentQ.options.map((opt, index) => { const safeOpt = opt.replace(/'/g, "\\'").replace(/"/g, '&quot;'); return `<button onclick="checkVocabAnswer(this, '${safeOpt}')" class="quiz-option bg-white border-2 border-gray-300 rounded-lg p-4 text-left font-semibold text-gray-700 text-lg hover:border-blue-400 focus:outline-none"><span class="inline-block bg-gray-100 rounded px-2 py-1 mr-2 text-sm text-gray-500">${String.fromCharCode(65 + index)}</span>${opt}</button>`; }).join('');
+            
+            // Xử lý Render Đáp án không truyền chuỗi quá dài vào hàm
+            grid.innerHTML = currentQ.options.map((opt, index) => { 
+                return `<button onclick="checkVocabAnswer(this, ${index})" class="quiz-option bg-white border-2 border-gray-300 rounded-lg p-4 text-left font-semibold text-gray-700 text-lg hover:border-blue-400 focus:outline-none"><span class="inline-block bg-gray-100 rounded px-2 py-1 mr-2 text-sm text-gray-500">${String.fromCharCode(65 + index)}</span>${opt.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</button>`; 
+            }).join('');
         }
 
-        function checkVocabAnswer(btnElement, selectedAnswer) {
+        function checkVocabAnswer(btnElement, optIndex) {
             const allBtns = document.getElementById('vocab-options-grid').querySelectorAll('button'); allBtns.forEach(b => b.disabled = true);
-            const currentQ = vocabQuestions[currentQuestionIndex]; const isCorrect = (selectedAnswer === currentQ.correct);
+            const currentQ = vocabQuestions[currentQuestionIndex]; 
+            const selectedAnswer = currentQ.options[optIndex]; // Lấy thẳng đáp án từ mảng, không lấy từ string HTML
+            const isCorrect = (selectedAnswer === currentQ.correct);
+            
             if(isCorrect) { btnElement.classList.add('quiz-correct'); currentScore++; setTimeout(() => { currentQuestionIndex++; renderNextVocabQuestion(); }, 800); } 
-            else { btnElement.classList.add('quiz-wrong'); allBtns.forEach(b => { if(b.innerText.includes(currentQ.correct)) b.classList.add('quiz-correct'); }); setTimeout(() => { endVocabGame(true); }, 1500); }
+            else { btnElement.classList.add('quiz-wrong'); allBtns.forEach((b, i) => { if(currentQ.options[i] === currentQ.correct) b.classList.add('quiz-correct'); }); setTimeout(() => { endVocabGame(true); }, 1500); }
         }
 
         async function endVocabGame(failedEarly = false) {
@@ -187,7 +214,7 @@
         function backToVocabList() { document.getElementById('vocab-play-view').classList.add('hidden'); document.getElementById('vocab-list-view').classList.remove('hidden'); document.getElementById('main-tabs').classList.remove('hidden'); }
         function shuffleArray(array) { let curId = array.length; while (0 !== curId) { let randId = Math.floor(Math.random() * curId); curId -= 1; let tmp = array[curId]; array[curId] = array[randId]; array[randId] = tmp; } return array; }
 
-        // CÁC CHỨC NĂNG CŨ (BÀI TẬP, TODOS...)
+        // CÁC CHỨC NĂNG CŨ KHÁC
         async function loadTracker(user) { const { data } = await dbClient.from('student_lessons').select('*').eq('username', user).order('id', { ascending: true }); document.getElementById('student-tracker-body').innerHTML = (data||[]).map(l => `<tr class="excel-row"><td class="excel-cell">${l.session_date}</td><td class="excel-cell whitespace-pre-wrap">${l.content}</td><td class="excel-cell ${l.payment_status==='PAID'?'text-green-700':'text-red-700'}">${l.payment_status==='PAID'?'Đã đóng':'Chưa đóng'}</td></tr>`).join(''); }
         async function loadHandouts(user) { const { data } = await dbClient.from('handouts').select('*').in('target_student', ['ALL', user]).order('id', { ascending: false }); document.getElementById('handouts-list').innerHTML = (data||[]).map(h => `<li class="p-4 bg-gray-50 border rounded flex justify-between"><span class="font-bold">📄 ${h.title}</span><a href="${h.file_url}" target="_blank" class="btn-90s bg-white px-4 py-1 text-sm">Mở File</a></li>`).join(''); }
         async function loadTodos(user) { const { data: todos } = await dbClient.from('todos').select('*').in('target_student', ['ALL', user]).order('id', { ascending: false }); const { data: dones } = await dbClient.from('todo_done').select('todo_id').eq('username', user); const doneIds = (dones||[]).map(d => d.todo_id); const container = document.getElementById('student-todo-list'); if(!todos || todos.length === 0) { container.innerHTML = `<p class="text-gray-500 italic">Hiện không có nhiệm vụ nào.</p>`; return; } container.innerHTML = todos.map(t => { const isDone = doneIds.includes(t.id); return `<div class="p-5 border-2 ${isDone ? 'border-green-300 bg-green-50 shadow-none' : 'border-orange-300 bg-white shadow-sm'} rounded-lg flex flex-col md:flex-row justify-between md:items-center gap-4 transition-all"><div><h4 class="text-lg font-bold ${isDone ? 'text-gray-500 line-through' : 'text-gray-900'}">📌 ${t.title}</h4>${t.link_url ? `<a href="${t.link_url}" target="_blank" class="text-blue-600 font-medium text-sm inline-block mt-2 bg-blue-50 px-3 py-1 rounded hover:bg-blue-100">🔗 Bấm vào đây để làm</a>` : ''}</div>${isDone ? `<span class="bg-green-200 text-green-800 px-4 py-2 rounded-full font-bold text-sm border border-green-400 self-start md:self-center">Đã xong ✅</span>` : `<button onclick="markTodoDone(${t.id})" class="btn-90s bg-orange-200 px-6 py-2 text-sm border-orange-500 font-bold self-start md:self-center">Đánh dấu xong ✔️</button>`}</div>`; }).join(''); }
