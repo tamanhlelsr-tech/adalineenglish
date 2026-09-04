@@ -85,15 +85,15 @@
 
                                 <div class="bg-white border rounded p-3 text-sm grid grid-cols-3 gap-2 text-center mb-3">
                                     <div class="bg-red-50 border border-red-200 p-2 rounded">
-                                        <span class="block text-xs font-bold text-red-600">Tháng này Lố (Nợ)</span>
+                                        <span class="block text-xs font-bold text-red-600" id="label-debt">Tháng này Lố (Nợ)</span>
                                         <span class="text-xl font-bold" id="stat-debt">0</span> <span class="text-xs">buổi</span>
                                     </div>
                                     <div class="bg-green-50 border border-green-200 p-2 rounded">
-                                        <span class="block text-xs font-bold text-green-600">Tháng này Dư</span>
+                                        <span class="block text-xs font-bold text-green-600" id="label-surplus">Tháng này Dư</span>
                                         <span class="text-xl font-bold" id="stat-surplus">0</span> <span class="text-xs">buổi</span>
                                     </div>
                                     <div class="bg-blue-50 border border-blue-200 p-2 rounded relative group cursor-help">
-                                        <span class="block text-xs font-bold text-blue-600 border-b border-blue-200 pb-1 mb-1">Lịch cố định tháng tới</span>
+                                        <span class="block text-xs font-bold text-blue-600 border-b border-blue-200 pb-1 mb-1" id="label-next-month">Lịch cố định tháng tới</span>
                                         <span class="text-xl font-bold text-blue-800" id="auto-next-month">0</span> <span class="text-xs">buổi</span>
                                         <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block w-48 bg-gray-800 text-white text-xs p-2 rounded z-10 shadow-lg text-left">
                                             Hệ thống tự đếm lịch tháng tới.
@@ -103,7 +103,7 @@
 
                                 <div class="flex justify-between items-center bg-yellow-100 p-3 rounded border border-yellow-400">
                                     <div>
-                                        <p class="text-xs font-bold text-gray-600 uppercase">THÁNG TỚI THU = (Lịch cố định + Lố - Dư) x Rate</p>
+                                        <p class="text-xs font-bold text-gray-600 uppercase" id="label-calc-total">THÁNG TỚI THU = (Lịch cố định + Lố - Dư) x Rate</p>
                                         <p class="text-2xl font-bold text-red-600"><span id="calc-total-sessions">0</span> buổi = <span id="calc-total-money">0</span> đ</p>
                                     </div>
                                     <button onclick="processMonthlyTuition()" class="btn-90s bg-green-400 px-4 py-2 font-bold whitespace-nowrap">Chốt & Tạo Lịch Mới</button>
@@ -113,7 +113,6 @@
                             <!-- BẢNG LỊCH HỌC -->
                             <div class="flex justify-between items-center mb-2 bg-gray-50 p-2 border rounded border-gray-300">
                                 <div class="flex items-center gap-2">
-                                    <!-- NÚT GÕ THỦ CÔNG ĐÃ ĐƯỢC KHÔI PHỤC -->
                                     <input type="number" id="prepaid-sessions" placeholder="Số buổi..." class="p-1 border border-gray-400 rounded w-20 text-sm font-bold text-center outline-none focus:border-green-500">
                                     <button onclick="addPrepaidLessons()" class="btn-90s bg-green-200 px-3 py-1 text-xs font-bold whitespace-nowrap">Tạo thủ công (Đã đóng)</button>
                                 </div>
@@ -127,7 +126,7 @@
                 </div>
             </div>
 
-            <!-- CÁC TAB CŨ GIỮ NGUYÊN (Assigment, ToDo, v.v...) -->
+            <!-- CÁC TAB CŨ (Assigment, ToDo, v.v...) -->
             <div id="tab-assign" class="tab-content hidden"><div class="grid grid-cols-2 gap-4 bg-blue-50 p-4 border rounded"><div class="space-y-3 flex flex-col"><input type="hidden" id="edit-ass-id"><select id="ass-target" class="w-full p-2 border rounded font-bold"><option value="ALL">Giao cho TẤT CẢ</option></select><div class="flex gap-2"><div class="w-1/2"><label class="font-bold text-xs text-gray-600 block mb-1">📅 Ngày giao:</label><input type="date" id="ass-assigned-date" class="w-full p-2 border rounded text-sm"></div><div class="w-1/2"><label class="font-bold text-xs text-red-600 block mb-1">⏰ Deadline:</label><input type="date" id="ass-deadline-date" class="w-full p-2 border rounded text-sm border-red-300"></div></div><select id="ass-type" class="w-full p-2 border rounded font-bold text-blue-700"><option value="READING">📖 Dạng Reading (Chia trái/phải)</option><option value="LISTENING">🎧 Dạng Listening (Chia trên/dưới)</option><option value="WRITING" selected>✍️ Dạng Writing (Bình thường)</option></select><input type="text" id="ass-title" placeholder="Tiêu đề bài tập" class="w-full p-2 border rounded"><input type="number" id="ass-timer" value="40" placeholder="Thời gian (phút)" class="w-full p-2 border rounded"><input type="text" id="ass-audio" placeholder="Link Audio (Nếu có)" class="w-full p-2 border rounded"><div class="mt-2"><label class="font-bold text-sm text-green-700">🖼️ Đề bài dạng ẢNH (Hiện bên TRÁI):</label><div id="paste-area" tabindex="0" class="w-full h-12 border-2 border-dashed border-green-400 bg-white flex items-center justify-center text-gray-400 text-sm font-bold mt-1">Dán ảnh vào đây (Ctrl+V) 📋</div><img id="img-preview" class="hidden mt-2 max-h-24 mx-auto border rounded"><input type="hidden" id="ass-img-base64"></div></div><div class="space-y-3 flex flex-col"><div class="flex-grow flex flex-col"><label class="font-bold text-sm text-gray-700">📖 Đề bài dạng TEXT (Hiện bên TRÁI):</label><textarea id="ass-content" rows="6" class="w-full p-2 border rounded flex-grow" placeholder="Nội dung bài đọc/passage..."></textarea></div><div class="flex-grow flex flex-col mt-2"><label class="font-bold text-sm text-pink-600">❓ CÂU HỎI (Hiện bên PHẢI, trên ô làm bài):</label><textarea id="ass-question" rows="5" class="w-full p-2 border-2 border-pink-300 rounded flex-grow" placeholder="Gõ câu hỏi vào đây..."></textarea></div></div></div><div class="flex gap-2 mt-4"><button onclick="cancelEditAss()" id="btn-cancel-ass" class="hidden btn-90s bg-gray-300 px-4 py-2">Hủy</button><button onclick="publishAss()" id="btn-publish-ass" class="btn-90s bg-blue-300 w-full py-2">🚀 Đăng Bài</button></div><div id="ass-list-container" class="space-y-2 max-h-60 overflow-y-auto mt-4 text-sm"></div></div>
             <div id="tab-todo" class="tab-content hidden"><div class="bg-orange-50 p-4 border rounded flex flex-wrap gap-4 items-end mb-4"><select id="todo-target" class="p-2 border rounded font-bold w-full md:w-auto"><option value="ALL">Giao cho TẤT CẢ</option></select><input type="text" id="todo-title" placeholder="Tên nhiệm vụ" class="p-2 border rounded flex-grow min-w-[200px]"><input type="text" id="todo-url" placeholder="Paste link vào đây (nếu có)" class="p-2 border rounded flex-grow min-w-[200px]"><button onclick="addTodo()" class="btn-90s bg-orange-300 px-6 py-2 w-full md:w-auto">Giao Việc</button></div><div id="todo-list-container" class="space-y-2 max-h-[400px] overflow-y-auto text-sm"></div></div>
             <div id="tab-handout" class="tab-content hidden"><div class="bg-purple-50 p-4 border rounded flex gap-4 items-end mb-4"><select id="hand-target" class="p-2 border rounded"><option value="ALL">Cho TẤT CẢ</option></select><input type="text" id="hand-title" placeholder="Tên tài liệu" class="p-2 border rounded flex-grow"><input type="text" id="hand-url" placeholder="Link File PDF/Doc" class="p-2 border rounded flex-grow"><button onclick="publishHandout()" id="btn-publish-hand" class="btn-90s bg-purple-300 px-4 py-2">Đăng File</button></div><div id="hand-list-container" class="space-y-2 max-h-60 overflow-y-auto text-sm"></div></div>
@@ -136,7 +135,6 @@
         </div>
     </div>
 
-    <!-- MODAL XEM TRƯỚC ĐỀ BÀI (ASSIGNMENT) -->
     <div id="view-ass-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center p-4"><div class="bg-white rounded-lg w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden shadow-2xl"><div class="p-4 border-b flex justify-between items-center bg-blue-50"><h3 id="view-ass-modal-title" class="text-xl font-bold text-blue-800">Tiêu đề bài tập</h3><button onclick="closeAssModal()" class="text-gray-500 font-bold hover:text-red-500 text-2xl px-2">✖</button></div><div class="p-4 overflow-y-auto flex-grow flex flex-col md:flex-row gap-4 bg-gray-100"><div class="w-full md:w-1/2 border rounded p-4 bg-white shadow-sm flex flex-col gap-3"><h4 class="font-bold text-gray-700 border-b pb-2 text-sm uppercase">📖 Nội dung Đề bài (Bên Trái)</h4><div id="view-ass-audio" class="hidden bg-blue-100 p-2 rounded"><audio controls class="w-full h-8"><source src=""></audio></div><img id="view-ass-img" src="" class="max-w-full h-auto hidden border rounded"><div id="view-ass-content" class="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed"></div></div><div class="w-full md:w-1/2 border rounded p-4 bg-pink-50 shadow-sm flex flex-col gap-3"><h4 class="font-bold text-pink-700 border-b border-pink-200 pb-2 text-sm uppercase">❓ Câu hỏi (Bên Phải)</h4><div id="view-ass-question" class="whitespace-pre-wrap text-sm font-medium text-gray-800"></div></div></div></div></div>
 
     <script>
@@ -150,7 +148,23 @@
         window.addEventListener('DOMContentLoaded', () => { 
             if (window.supabase) { dbClient = window.supabase.createClient(supabaseUrl, supabaseKey); }
             document.getElementById('admin-pass-input').addEventListener('keypress', function (e) { if (e.key === 'Enter') { checkAdminLogin(); } });
+            
+            // Cập nhật nhãn tháng hiện tại/tới dựa trên thời gian thực
+            updateMonthLabels();
         });
+
+        // Hàm cập nhật nhãn tháng tự động
+        function updateMonthLabels() {
+            const today = new Date();
+            const currentMonth = today.getMonth() + 1;
+            let nextMonth = currentMonth + 1;
+            if (nextMonth > 12) nextMonth = 1;
+
+            document.getElementById('label-debt').innerText = `Tháng ${currentMonth} Lố (Nợ)`;
+            document.getElementById('label-surplus').innerText = `Tháng ${currentMonth} Dư`;
+            document.getElementById('label-next-month').innerText = `Lịch cố định tháng ${nextMonth}`;
+            document.getElementById('label-calc-total').innerText = `THÁNG ${nextMonth} THU = (Lịch cố định + Lố - Dư) x Rate`;
+        }
 
         function checkAdminLogin() { const input = document.getElementById('admin-pass-input').value; if (input === ADMIN_PASS) { document.getElementById('admin-login-overlay').classList.add('hidden'); const mainContent = document.getElementById('main-admin-content'); mainContent.classList.remove('opacity-0', 'pointer-events-none'); refreshAll(); } else { document.getElementById('admin-error-msg').classList.remove('hidden'); document.getElementById('admin-pass-input').value = ''; } }
         function refreshAll() { loadStudents(); loadAssignments(); loadTodos(); loadHandouts(); loadGradingList(); }
@@ -253,7 +267,13 @@
 
         async function processMonthlyTuition() {
             const nextMonthSessions = parseInt(document.getElementById('calc-total-sessions').innerText);
-            if(!confirm(`Xác nhận học sinh ĐÃ ĐÓNG ${document.getElementById('calc-total-money').innerText} VNĐ cho ${nextMonthSessions} buổi tháng tới?\nHệ thống sẽ tự động gạch nợ và tạo số lịch mới.`)) return;
+            
+            // Cập nhật lại thông báo cho khớp với tháng
+            const today = new Date();
+            let nextMonth = today.getMonth() + 2;
+            if (nextMonth > 12) nextMonth = 1;
+
+            if(!confirm(`Xác nhận học sinh ĐÃ ĐÓNG ${document.getElementById('calc-total-money').innerText} VNĐ cho ${nextMonthSessions} buổi của THÁNG ${nextMonth}?\nHệ thống sẽ tự động gạch nợ và tạo số lịch mới.`)) return;
             
             await dbClient.from('student_lessons').update({ payment_status: 'PAID' }).eq('username', currentSelectedUser).eq('payment_status', 'UNPAID');
             
@@ -268,7 +288,6 @@
             alert("✅ Đã ghi nhận thu tiền thành công!"); loadLessons(currentSelectedUser);
         }
 
-        // HÀM TẠO SẴN SỐ BUỔI THỦ CÔNG ĐÃ ĐƯỢC KHÔI PHỤC
         async function addPrepaidLessons() { 
             const num = parseInt(document.getElementById('prepaid-sessions').value); 
             if(!num || num <= 0) return alert("Nhập số buổi hợp lệ!"); 
@@ -286,7 +305,6 @@
         async function updateStudentMeet() { await dbClient.from('students').update({ meet_link: document.getElementById('detail-meet').value.trim() }).eq('username', currentSelectedUser); alert("✅ Đã ghim Link!"); loadStudents(); }
         async function delStudent(user) { if(confirm("XÓA học sinh?")) { await dbClient.from('students').delete().eq('username', user); loadStudents(); document.getElementById('student-detail').classList.add('hidden'); } }
 
-        // BÀI TẬP, TÀI LIỆU, TODO (CŨ)
         let allAss = [];
         async function loadAssignments() { const { data } = await dbClient.from('assignments').select('*').order('id', { ascending: false }); allAss = data || []; document.getElementById('ass-list-container').innerHTML = allAss.map(a => `<div class="p-2 border rounded bg-gray-50 flex justify-between items-center"><div><span class="font-bold">[${a.ass_type||'WRITING'}] ${a.title}</span> <span class="text-xs text-gray-500">(${a.target_student})</span> <br><small class="text-gray-500">📅 ${a.assigned_date||'--'} | ⏰ ${a.deadline_date||'--'}</small></div> <div><button onclick="viewAss(${a.id})" class="bg-blue-100 text-blue-700 px-2 py-1 rounded border border-blue-300 mr-1 font-bold text-xs hover:bg-blue-200">👁️ Xem Đề</button><button onclick="editAss(${a.id})" class="bg-yellow-100 px-2 py-1 rounded border border-yellow-300 mr-1 text-xs hover:bg-yellow-200">Sửa</button><button onclick="delAss(${a.id})" class="bg-red-100 px-2 py-1 rounded border border-red-300 text-xs hover:bg-red-200">Xóa</button></div></div>`).join(''); }
         function viewAss(id) { const a = allAss.find(x => x.id === id); if(!a) return; document.getElementById('view-ass-modal-title').innerText = `[${a.ass_type||'WRITING'}] ${a.title}`; document.getElementById('view-ass-content').innerText = a.content || 'Không có nội dung Text.'; document.getElementById('view-ass-question').innerText = a.question_text || 'Không có nội dung Câu hỏi.'; const audioDiv = document.getElementById('view-ass-audio'); if(a.audio_url) { audioDiv.classList.remove('hidden'); audioDiv.querySelector('source').src = a.audio_url; audioDiv.querySelector('audio').load(); } else { audioDiv.classList.add('hidden'); } const imgEl = document.getElementById('view-ass-img'); if(a.image_url) { imgEl.classList.remove('hidden'); imgEl.src = a.image_url; } else { imgEl.classList.add('hidden'); } document.getElementById('view-ass-modal').classList.remove('hidden'); }
