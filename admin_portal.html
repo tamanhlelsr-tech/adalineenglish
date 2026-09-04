@@ -16,8 +16,6 @@
         .excel-header { background-color: #D97A73; color: white; border: 1px solid #000; }
         .excel-row { background-color: #FAD4D4; border: 1px solid #000; }
         .excel-cell { border: 1px solid #000; padding: 8px; }
-        
-        /* Style cho Checkbox Ngày trong tuần */
         .day-checkbox input:checked + div { background-color: #3b82f6; border-color: #2563eb; color: white; }
     </style>
 </head>
@@ -74,7 +72,6 @@
                                     <div class="md:col-span-2">
                                         <label class="block text-xs font-bold text-gray-600 mb-1">📌 Ghim Lịch Cố Định (Chọn ngày học trong tuần):</label>
                                         <div class="flex flex-wrap gap-2" id="schedule-days-container">
-                                            <!-- Dùng JS tự đếm ngày: 0=CN, 1=T2, 2=T3... 6=T7 -->
                                             <label class="day-checkbox cursor-pointer"><input type="checkbox" class="hidden" value="1" onchange="recalcTuition()"><div class="px-2 py-1 border rounded text-sm bg-white hover:bg-gray-100 transition">T2</div></label>
                                             <label class="day-checkbox cursor-pointer"><input type="checkbox" class="hidden" value="2" onchange="recalcTuition()"><div class="px-2 py-1 border rounded text-sm bg-white hover:bg-gray-100 transition">T3</div></label>
                                             <label class="day-checkbox cursor-pointer"><input type="checkbox" class="hidden" value="3" onchange="recalcTuition()"><div class="px-2 py-1 border rounded text-sm bg-white hover:bg-gray-100 transition">T4</div></label>
@@ -98,9 +95,8 @@
                                     <div class="bg-blue-50 border border-blue-200 p-2 rounded relative group cursor-help">
                                         <span class="block text-xs font-bold text-blue-600 border-b border-blue-200 pb-1 mb-1">Lịch cố định tháng tới</span>
                                         <span class="text-xl font-bold text-blue-800" id="auto-next-month">0</span> <span class="text-xs">buổi</span>
-                                        <!-- Tooltip giải thích cách tính -->
                                         <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block w-48 bg-gray-800 text-white text-xs p-2 rounded z-10 shadow-lg text-left">
-                                            Hệ thống tự đếm lịch tháng tới (VD tháng tới có 4 ngày T2 và 4 ngày T4 = 8 buổi)
+                                            Hệ thống tự đếm lịch tháng tới.
                                         </div>
                                     </div>
                                 </div>
@@ -115,10 +111,16 @@
                             </div>
                             
                             <!-- BẢNG LỊCH HỌC -->
-                            <div class="flex justify-between items-end mb-2">
-                                <p class="text-xs text-gray-500 font-bold">💡 Mẹo: Bấm thẳng vào ô trắng ở bảng dưới để gõ Ngày/Nội dung, hệ thống tự động lưu!</p>
-                                <button onclick="addLesson()" class="btn-90s bg-red-200 px-3 py-1 text-xs font-bold">+ 1 Buổi lẻ (Chưa đóng)</button>
+                            <div class="flex justify-between items-center mb-2 bg-gray-50 p-2 border rounded border-gray-300">
+                                <div class="flex items-center gap-2">
+                                    <!-- NÚT GÕ THỦ CÔNG ĐÃ ĐƯỢC KHÔI PHỤC -->
+                                    <input type="number" id="prepaid-sessions" placeholder="Số buổi..." class="p-1 border border-gray-400 rounded w-20 text-sm font-bold text-center outline-none focus:border-green-500">
+                                    <button onclick="addPrepaidLessons()" class="btn-90s bg-green-200 px-3 py-1 text-xs font-bold whitespace-nowrap">Tạo thủ công (Đã đóng)</button>
+                                </div>
+                                <button onclick="addLesson()" class="btn-90s bg-red-200 px-3 py-1 text-xs font-bold whitespace-nowrap">+ 1 Buổi lẻ (Chưa đóng)</button>
                             </div>
+                            <p class="text-xs text-gray-500 font-bold mb-2">💡 Mẹo: Bấm thẳng vào ô trắng ở bảng dưới để gõ Ngày/Nội dung, hệ thống tự động lưu!</p>
+
                             <div class="overflow-x-auto"><table class="min-w-full text-center border-collapse text-sm"><thead class="excel-header"><tr><th class="excel-cell w-10">STT</th><th class="excel-cell w-1/4">NGÀY HỌC</th><th class="excel-cell w-1/2">NỘI DUNG BÀI HỌC</th><th class="excel-cell">HỌC PHÍ</th><th class="excel-cell">XÓA</th></tr></thead><tbody id="lesson-table-body"></tbody></table></div>
                         </div>
                     </div>
@@ -143,7 +145,7 @@
         let dbClient = null; let currentSelectedUser = null; let globalAllStudents = [];
         
         let currentDebt = 0; let currentSurplus = 0;
-        let selectedScheduleDays = []; // Mảng lưu các thứ trong tuần (0-6)
+        let selectedScheduleDays = []; 
 
         window.addEventListener('DOMContentLoaded', () => { 
             if (window.supabase) { dbClient = window.supabase.createClient(supabaseUrl, supabaseKey); }
@@ -161,7 +163,6 @@
         async function loadStudents() { const { data } = await dbClient.from('students').select('*').order('id', { ascending: false }); if (data) { globalAllStudents = data; const list = document.getElementById('student-list'); const selAss = document.getElementById('ass-target'); const selHand = document.getElementById('hand-target'); const selTodo = document.getElementById('todo-target'); const selErr = document.getElementById('err-target'); list.innerHTML = ''; selAss.innerHTML = '<option value="ALL">Giao cho TẤT CẢ</option>'; selHand.innerHTML = '<option value="ALL">Cho TẤT CẢ</option>'; selTodo.innerHTML = '<option value="ALL">Giao cho TẤT CẢ</option>'; selErr.innerHTML = '<option value="">-- Chọn HS --</option>'; data.forEach(s => { list.innerHTML += `<div class="flex gap-2 mb-1"><button onclick="viewStudent('${s.username}')" class="flex-grow text-left p-2 bg-gray-50 border hover:bg-pink-100">👤 ${s.full_name||s.username}</button><button onclick="delStudent('${s.username}')" class="p-2 bg-red-100 text-red-600 border">X</button></div>`; const opt = `<option value="${s.username}">${s.full_name||s.username}</option>`; selAss.innerHTML += opt; selHand.innerHTML += opt; selTodo.innerHTML += opt; selErr.innerHTML += opt; }); } }
         async function addStudent() { const u = document.getElementById('stu-user').value; const p = document.getElementById('stu-pass').value; const n = document.getElementById('stu-name').value; if(!u || !p) return alert("Thiếu TK!"); await dbClient.from('students').insert([{ username: u, password: p, full_name: n }]); loadStudents(); }
         
-        // HỆ THỐNG TÍNH TOÁN NGÀY THÁNG THÔNG MINH
         function viewStudent(u) { 
             currentSelectedUser = u; const student = globalAllStudents.find(s => s.username === u); 
             document.getElementById('student-detail').classList.remove('hidden'); 
@@ -170,10 +171,7 @@
             document.getElementById('detail-pass').value = student.password; 
             document.getElementById('detail-meet').value = student.meet_link || ""; 
             
-            // Xử lý dữ liệu
             document.getElementById('tuition-rate').value = student.tuition_rate || 0;
-            
-            // Đánh dấu các checkbox lịch cố định (dữ liệu lưu dạng "1,3" -> T2, T4)
             const savedSchedule = student.schedule_notes || "";
             const checkboxes = document.querySelectorAll('.day-checkbox input');
             checkboxes.forEach(cb => {
@@ -184,41 +182,29 @@
             loadLessons(u); 
         }
 
-        // Hàm tính tự động có bao nhiêu ngày học trong tháng kế tiếp
         function getSessionsNextMonth(daysOfWeekArray) {
             if (daysOfWeekArray.length === 0) return 0;
             const today = new Date();
             let year = today.getFullYear();
-            let month = today.getMonth() + 1; // getMonth trả về 0-11, cộng 1 để ra tháng sau
-            
-            // Nếu hiện tại là tháng 12, tháng tới là tháng 1 năm sau
+            let month = today.getMonth() + 1;
             if (month > 11) { month = 0; year++; }
-
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             let count = 0;
-            
             for (let d = 1; d <= daysInMonth; d++) {
                 const date = new Date(year, month, d);
-                if (daysOfWeekArray.includes(date.getDay().toString())) {
-                    count++;
-                }
+                if (daysOfWeekArray.includes(date.getDay().toString())) { count++; }
             }
             return count;
         }
 
         function recalcTuition() {
-            // Lấy danh sách ngày đã check
             const checkboxes = document.querySelectorAll('.day-checkbox input:checked');
             selectedScheduleDays = Array.from(checkboxes).map(cb => cb.value);
-            
-            // Lưu ngầm config
             saveTuitionConfig(); 
 
-            // 1. Tự đếm số buổi tháng tới
             const nextMonthSessions = getSessionsNextMonth(selectedScheduleDays);
             document.getElementById('auto-next-month').innerText = nextMonthSessions;
 
-            // 2. Tính tiền: (Lịch tới + Lố - Dư) * Rate
             const rate = parseInt(document.getElementById('tuition-rate').value) || 0;
             let totalSessions = nextMonthSessions + currentDebt - currentSurplus;
             if(totalSessions < 0) totalSessions = 0; 
@@ -230,7 +216,7 @@
         }
 
         async function saveTuitionConfig() {
-            const scheduleString = selectedScheduleDays.join(','); // Lưu dạng "1,3,5"
+            const scheduleString = selectedScheduleDays.join(',');
             await dbClient.from('students').update({
                 tuition_rate: document.getElementById('tuition-rate').value || 0,
                 schedule_notes: scheduleString
@@ -252,7 +238,7 @@
             document.getElementById('stat-debt').innerText = currentDebt;
             document.getElementById('stat-surplus').innerText = currentSurplus;
             
-            recalcTuition(); // Tính tiền khi load xong
+            recalcTuition(); 
 
             document.getElementById('lesson-table-body').innerHTML = (data||[]).map((l, index) => 
                 `<tr class="excel-row">
@@ -267,29 +253,28 @@
 
         async function processMonthlyTuition() {
             const nextMonthSessions = parseInt(document.getElementById('calc-total-sessions').innerText);
-            
             if(!confirm(`Xác nhận học sinh ĐÃ ĐÓNG ${document.getElementById('calc-total-money').innerText} VNĐ cho ${nextMonthSessions} buổi tháng tới?\nHệ thống sẽ tự động gạch nợ và tạo số lịch mới.`)) return;
             
-            // 1. Gạch nợ cũ
-            await dbClient.from('student_lessons').update({ payment_status: 'PAID' })
-                .eq('username', currentSelectedUser).eq('payment_status', 'UNPAID');
+            await dbClient.from('student_lessons').update({ payment_status: 'PAID' }).eq('username', currentSelectedUser).eq('payment_status', 'UNPAID');
             
-            // 2. Tạo lịch mới
-            // Số buổi tự động tạo = Số buổi cần thu (total) - Số buổi lố (vì lố đã được biến thành PAID ở bước 1)
-            // Nói cách khác, ta chỉ cần tạo = Lịch Cố Định Tháng Tới - Số Dư
             const autoNextMonth = parseInt(document.getElementById('auto-next-month').innerText);
             const rowsToCreate = autoNextMonth - currentSurplus;
             
             if(rowsToCreate > 0) {
                 const payloads = []; 
-                for(let i=0; i<rowsToCreate; i++) { 
-                    payloads.push({ username: currentSelectedUser, session_date: '', content: '', payment_status: 'PAID' }); 
-                }
+                for(let i=0; i<rowsToCreate; i++) { payloads.push({ username: currentSelectedUser, session_date: '', content: '', payment_status: 'PAID' }); }
                 await dbClient.from('student_lessons').insert(payloads);
             }
-            
-            alert("✅ Đã ghi nhận thu tiền thành công!");
-            loadLessons(currentSelectedUser);
+            alert("✅ Đã ghi nhận thu tiền thành công!"); loadLessons(currentSelectedUser);
+        }
+
+        // HÀM TẠO SẴN SỐ BUỔI THỦ CÔNG ĐÃ ĐƯỢC KHÔI PHỤC
+        async function addPrepaidLessons() { 
+            const num = parseInt(document.getElementById('prepaid-sessions').value); 
+            if(!num || num <= 0) return alert("Nhập số buổi hợp lệ!"); 
+            const payloads = []; for(let i=0; i<num; i++) { payloads.push({ username: currentSelectedUser, session_date: '', content: '', payment_status: 'PAID' }); }
+            await dbClient.from('student_lessons').insert(payloads); 
+            document.getElementById('prepaid-sessions').value = ''; loadLessons(currentSelectedUser); 
         }
 
         async function updateLesson(id, field, value) { const payload = {}; payload[field] = value; await dbClient.from('student_lessons').update(payload).eq('id', id); loadLessons(currentSelectedUser); } 
