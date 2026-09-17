@@ -14,7 +14,7 @@
         .btn-90s:active { box-shadow: 0px 0px 0px #000; transform: translate(3px, 3px); }
         .hidden-page { display: none; }
         .excel-header { background-color: #D97A73; color: white; border: 1px solid #000; }
-        .excel-row { background-color: #FAD4D4; border: 1px solid #000; }
+        .excel-row { border: 1px solid #000; }
         .excel-cell { border: 1px solid #000; padding: 8px; }
         .day-checkbox input:checked + div { background-color: #3b82f6; border-color: #2563eb; color: white; }
     </style>
@@ -62,7 +62,7 @@
                             
                             <!-- BẢNG TÍNH HỌC PHÍ TỰ ĐỘNG THÔNG MINH -->
                             <div class="bg-orange-50 border-2 border-orange-300 rounded p-4 mb-4 shadow-sm">
-                                <h3 class="font-bold text-orange-800 text-lg mb-3 border-b border-orange-200 pb-2">💰 TÍNH TỰ ĐỘNG HỌC PHÍ THÁNG TỚI</h3>
+                                <h3 class="font-bold text-orange-800 text-lg mb-3 border-b border-orange-200 pb-2">💰 KẾ TOÁN TỰ ĐỘNG</h3>
                                 
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                     <div class="md:col-span-1 border-r border-orange-200 pr-4">
@@ -118,15 +118,29 @@
                                 </div>
                                 <button onclick="addLesson()" class="btn-90s bg-red-200 px-3 py-1 text-xs font-bold whitespace-nowrap">+ 1 Buổi lẻ (Chưa đóng)</button>
                             </div>
-                            <p class="text-xs text-gray-500 font-bold mb-2">💡 Mẹo: Bấm thẳng vào ô trắng ở bảng dưới để gõ Ngày/Nội dung, hệ thống tự động lưu!</p>
+                            <p class="text-xs text-gray-500 font-bold mb-2">💡 Mẹo: Những ô màu xám là các buổi đã "Chốt sổ" thu tiền.</p>
 
-                            <div class="overflow-x-auto"><table class="min-w-full text-center border-collapse text-sm"><thead class="excel-header"><tr><th class="excel-cell w-10">STT</th><th class="excel-cell w-1/4">NGÀY HỌC</th><th class="excel-cell w-1/2">NỘI DUNG BÀI HỌC</th><th class="excel-cell">HỌC PHÍ</th><th class="excel-cell">XÓA</th></tr></thead><tbody id="lesson-table-body"></tbody></table></div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full text-center border-collapse text-sm">
+                                    <thead class="excel-header">
+                                        <tr>
+                                            <th class="excel-cell w-10">STT</th>
+                                            <th class="excel-cell w-1/6">NGÀY HỌC</th>
+                                            <th class="excel-cell w-2/6">NỘI DUNG</th>
+                                            <th class="excel-cell w-1/6 bg-orange-500 text-white" title="Nghỉ gấp trừ 30% học phí">NGHỈ GẤP (30%)</th>
+                                            <th class="excel-cell w-1/6">HỌC PHÍ</th>
+                                            <th class="excel-cell w-10">XÓA</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lesson-table-body"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- CÁC TAB CŨ (Assigment, ToDo, v.v...) -->
+            <!-- CÁC TAB CŨ GIỮ NGUYÊN -->
             <div id="tab-assign" class="tab-content hidden"><div class="grid grid-cols-2 gap-4 bg-blue-50 p-4 border rounded"><div class="space-y-3 flex flex-col"><input type="hidden" id="edit-ass-id"><select id="ass-target" class="w-full p-2 border rounded font-bold"><option value="ALL">Giao cho TẤT CẢ</option></select><div class="flex gap-2"><div class="w-1/2"><label class="font-bold text-xs text-gray-600 block mb-1">📅 Ngày giao:</label><input type="date" id="ass-assigned-date" class="w-full p-2 border rounded text-sm"></div><div class="w-1/2"><label class="font-bold text-xs text-red-600 block mb-1">⏰ Deadline:</label><input type="date" id="ass-deadline-date" class="w-full p-2 border rounded text-sm border-red-300"></div></div><select id="ass-type" class="w-full p-2 border rounded font-bold text-blue-700"><option value="READING">📖 Dạng Reading (Chia trái/phải)</option><option value="LISTENING">🎧 Dạng Listening (Chia trên/dưới)</option><option value="WRITING" selected>✍️ Dạng Writing (Bình thường)</option></select><input type="text" id="ass-title" placeholder="Tiêu đề bài tập" class="w-full p-2 border rounded"><input type="number" id="ass-timer" value="40" placeholder="Thời gian (phút)" class="w-full p-2 border rounded"><input type="text" id="ass-audio" placeholder="Link Audio (Nếu có)" class="w-full p-2 border rounded"><div class="mt-2"><label class="font-bold text-sm text-green-700">🖼️ Đề bài dạng ẢNH (Hiện bên TRÁI):</label><div id="paste-area" tabindex="0" class="w-full h-12 border-2 border-dashed border-green-400 bg-white flex items-center justify-center text-gray-400 text-sm font-bold mt-1">Dán ảnh vào đây (Ctrl+V) 📋</div><img id="img-preview" class="hidden mt-2 max-h-24 mx-auto border rounded"><input type="hidden" id="ass-img-base64"></div></div><div class="space-y-3 flex flex-col"><div class="flex-grow flex flex-col"><label class="font-bold text-sm text-gray-700">📖 Đề bài dạng TEXT (Hiện bên TRÁI):</label><textarea id="ass-content" rows="6" class="w-full p-2 border rounded flex-grow" placeholder="Nội dung bài đọc/passage..."></textarea></div><div class="flex-grow flex flex-col mt-2"><label class="font-bold text-sm text-pink-600">❓ CÂU HỎI (Hiện bên PHẢI, trên ô làm bài):</label><textarea id="ass-question" rows="5" class="w-full p-2 border-2 border-pink-300 rounded flex-grow" placeholder="Gõ câu hỏi vào đây..."></textarea></div></div></div><div class="flex gap-2 mt-4"><button onclick="cancelEditAss()" id="btn-cancel-ass" class="hidden btn-90s bg-gray-300 px-4 py-2">Hủy</button><button onclick="publishAss()" id="btn-publish-ass" class="btn-90s bg-blue-300 w-full py-2">🚀 Đăng Bài</button></div><div id="ass-list-container" class="space-y-2 max-h-60 overflow-y-auto mt-4 text-sm"></div></div>
             <div id="tab-todo" class="tab-content hidden"><div class="bg-orange-50 p-4 border rounded flex flex-wrap gap-4 items-end mb-4"><select id="todo-target" class="p-2 border rounded font-bold w-full md:w-auto"><option value="ALL">Giao cho TẤT CẢ</option></select><input type="text" id="todo-title" placeholder="Tên nhiệm vụ" class="p-2 border rounded flex-grow min-w-[200px]"><input type="text" id="todo-url" placeholder="Paste link vào đây (nếu có)" class="p-2 border rounded flex-grow min-w-[200px]"><button onclick="addTodo()" class="btn-90s bg-orange-300 px-6 py-2 w-full md:w-auto">Giao Việc</button></div><div id="todo-list-container" class="space-y-2 max-h-[400px] overflow-y-auto text-sm"></div></div>
             <div id="tab-handout" class="tab-content hidden"><div class="bg-purple-50 p-4 border rounded flex gap-4 items-end mb-4"><select id="hand-target" class="p-2 border rounded"><option value="ALL">Cho TẤT CẢ</option></select><input type="text" id="hand-title" placeholder="Tên tài liệu" class="p-2 border rounded flex-grow"><input type="text" id="hand-url" placeholder="Link File PDF/Doc" class="p-2 border rounded flex-grow"><button onclick="publishHandout()" id="btn-publish-hand" class="btn-90s bg-purple-300 px-4 py-2">Đăng File</button></div><div id="hand-list-container" class="space-y-2 max-h-60 overflow-y-auto text-sm"></div></div>
@@ -135,6 +149,7 @@
         </div>
     </div>
 
+    <!-- MODAL XEM TRƯỚC ĐỀ BÀI (ASSIGNMENT) -->
     <div id="view-ass-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center p-4"><div class="bg-white rounded-lg w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden shadow-2xl"><div class="p-4 border-b flex justify-between items-center bg-blue-50"><h3 id="view-ass-modal-title" class="text-xl font-bold text-blue-800">Tiêu đề bài tập</h3><button onclick="closeAssModal()" class="text-gray-500 font-bold hover:text-red-500 text-2xl px-2">✖</button></div><div class="p-4 overflow-y-auto flex-grow flex flex-col md:flex-row gap-4 bg-gray-100"><div class="w-full md:w-1/2 border rounded p-4 bg-white shadow-sm flex flex-col gap-3"><h4 class="font-bold text-gray-700 border-b pb-2 text-sm uppercase">📖 Nội dung Đề bài (Bên Trái)</h4><div id="view-ass-audio" class="hidden bg-blue-100 p-2 rounded"><audio controls class="w-full h-8"><source src=""></audio></div><img id="view-ass-img" src="" class="max-w-full h-auto hidden border rounded"><div id="view-ass-content" class="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed"></div></div><div class="w-full md:w-1/2 border rounded p-4 bg-pink-50 shadow-sm flex flex-col gap-3"><h4 class="font-bold text-pink-700 border-b border-pink-200 pb-2 text-sm uppercase">❓ Câu hỏi (Bên Phải)</h4><div id="view-ass-question" class="whitespace-pre-wrap text-sm font-medium text-gray-800"></div></div></div></div></div>
 
     <script>
@@ -142,18 +157,15 @@
         const supabaseUrl = 'https://bcxjskvyromnrrtzqafu.supabase.co'; const supabaseKey = 'sb_publishable_4kpK2eA9PWZsXr0w2GHZYQ_Vq2hzkEO';
         let dbClient = null; let currentSelectedUser = null; let globalAllStudents = [];
         
-        let currentDebt = 0; let currentSurplus = 0;
+        let currentDebt = 0; let currentSurplus = 0; let currentBlankPaidSlots = 0;
         let selectedScheduleDays = []; 
 
         window.addEventListener('DOMContentLoaded', () => { 
             if (window.supabase) { dbClient = window.supabase.createClient(supabaseUrl, supabaseKey); }
             document.getElementById('admin-pass-input').addEventListener('keypress', function (e) { if (e.key === 'Enter') { checkAdminLogin(); } });
-            
-            // Cập nhật nhãn tháng hiện tại/tới dựa trên thời gian thực
             updateMonthLabels();
         });
 
-        // Hàm cập nhật nhãn tháng tự động
         function updateMonthLabels() {
             const today = new Date();
             const currentMonth = today.getMonth() + 1;
@@ -225,7 +237,7 @@
             
             const totalMoney = totalSessions * rate;
 
-            document.getElementById('calc-total-sessions').innerText = totalSessions;
+            document.getElementById('calc-total-sessions').innerText = Number(totalSessions.toFixed(1));
             document.getElementById('calc-total-money').innerText = new Intl.NumberFormat('vi-VN').format(totalMoney);
         }
 
@@ -246,43 +258,73 @@
         async function loadLessons(user) { 
             const { data } = await dbClient.from('student_lessons').select('*').eq('username', user).order('id', { ascending: true }); 
             
-            currentDebt = (data||[]).filter(l => l.payment_status === 'UNPAID').length;
-            currentSurplus = (data||[]).filter(l => l.payment_status === 'PAID' && !l.session_date && !l.content).length;
+            let debt = 0; let surplus = 0; let blankPaidSlots = 0;
             
-            document.getElementById('stat-debt').innerText = currentDebt;
-            document.getElementById('stat-surplus').innerText = currentSurplus;
+            const rowsHtml = (data||[]).map((l, index) => {
+                const isBlank = !l.session_date && !l.content;
+                
+                // Thuật toán đếm số buổi (Chỉ tính những dòng CHƯA CHỐT SỔ)
+                if (!l.is_billed) {
+                    if (l.payment_status === 'UNPAID') {
+                        if (l.is_urgent) debt += 0.3;
+                        else if (!isBlank) debt += 1.0;
+                    } else if (l.payment_status === 'PAID') {
+                        if (l.is_urgent) surplus += 0.7; // Đóng 100% nhưng chỉ xài 30% (nghỉ gấp) -> Dư 70%
+                        else if (isBlank) { surplus += 1.0; blankPaidSlots += 1; }
+                    }
+                }
+
+                const rowBg = l.is_billed ? 'bg-gray-100 text-gray-500 opacity-80' : 'bg-white';
+                
+                return `
+                <tr class="excel-row ${rowBg}">
+                    <td class="excel-cell font-bold">${index + 1}</td>
+                    <td class="excel-cell p-0"><input type="text" placeholder="Nhập ngày..." class="w-full h-full p-2 bg-transparent outline-none text-center" value="${l.session_date||''}" onchange="updateLesson(${l.id}, 'session_date', this.value)"></td>
+                    <td class="excel-cell p-0"><input type="text" placeholder="Nhập nội dung..." class="w-full h-full p-2 bg-transparent outline-none text-left" value="${l.content||''}" onchange="updateLesson(${l.id}, 'content', this.value)"></td>
+                    <td class="excel-cell"><label class="flex items-center justify-center cursor-pointer w-full h-full"><input type="checkbox" class="w-4 h-4 cursor-pointer" ${l.is_urgent ? 'checked' : ''} onchange="updateLesson(${l.id}, 'is_urgent', this.checked)"></label></td>
+                    <td class="excel-cell cursor-pointer font-bold ${l.payment_status==='PAID'?'text-green-600':'text-red-500'}" onclick="togglePayment(${l.id}, '${l.payment_status}')">${l.payment_status==='PAID'?'✅ Đã đóng':'⚠️ Lố/Nợ'}</td>
+                    <td class="excel-cell text-red-500 cursor-pointer font-bold" onclick="delLesson(${l.id})">X</td>
+                </tr>`;
+            }).join('');
+
+            currentDebt = debt; 
+            currentSurplus = surplus;
+            currentBlankPaidSlots = blankPaidSlots;
+            
+            document.getElementById('stat-debt').innerText = Number(currentDebt.toFixed(1));
+            document.getElementById('stat-surplus').innerText = Number(currentSurplus.toFixed(1));
+            document.getElementById('lesson-table-body').innerHTML = rowsHtml;
             
             recalcTuition(); 
-
-            document.getElementById('lesson-table-body').innerHTML = (data||[]).map((l, index) => 
-                `<tr class="excel-row">
-                    <td class="excel-cell font-bold text-gray-600">${index + 1}</td>
-                    <td class="excel-cell p-0 bg-white"><input type="text" placeholder="Nhập ngày..." class="w-full h-full p-2 bg-transparent outline-none text-center" value="${l.session_date||''}" onchange="updateLesson(${l.id}, 'session_date', this.value)"></td>
-                    <td class="excel-cell p-0 bg-white"><input type="text" placeholder="Nhập nội dung..." class="w-full h-full p-2 bg-transparent outline-none text-left" value="${l.content||''}" onchange="updateLesson(${l.id}, 'content', this.value)"></td>
-                    <td class="excel-cell cursor-pointer font-bold ${l.payment_status==='PAID'?'text-green-700':'text-red-700'}" onclick="togglePayment(${l.id}, '${l.payment_status}')">${l.payment_status==='PAID'?'✅ Đã đóng':'⚠️ Lố (Chưa đóng)'}</td>
-                    <td class="excel-cell text-red-500 cursor-pointer font-bold" onclick="delLesson(${l.id})">X</td>
-                </tr>`
-            ).join(''); 
         }
 
         async function processMonthlyTuition() {
-            const nextMonthSessions = parseInt(document.getElementById('calc-total-sessions').innerText);
-            
-            // Cập nhật lại thông báo cho khớp với tháng
+            const nextMonthSessions = Number(document.getElementById('calc-total-sessions').innerText);
             const today = new Date();
             let nextMonth = today.getMonth() + 2;
             if (nextMonth > 12) nextMonth = 1;
 
-            if(!confirm(`Xác nhận học sinh ĐÃ ĐÓNG ${document.getElementById('calc-total-money').innerText} VNĐ cho ${nextMonthSessions} buổi của THÁNG ${nextMonth}?\nHệ thống sẽ tự động gạch nợ và tạo số lịch mới.`)) return;
+            if(!confirm(`Xác nhận học sinh ĐÃ ĐÓNG ${document.getElementById('calc-total-money').innerText} VNĐ cho ${nextMonthSessions} buổi của THÁNG ${nextMonth}?\nHệ thống sẽ lưu trữ lịch cũ và tạo số lịch mới.`)) return;
             
-            await dbClient.from('student_lessons').update({ payment_status: 'PAID' }).eq('username', currentSelectedUser).eq('payment_status', 'UNPAID');
+            // 1. Chốt sổ các buổi đã học/nghỉ gấp của tháng này
+            const { data } = await dbClient.from('student_lessons').select('*').eq('username', currentSelectedUser).eq('is_billed', false);
+            if(data && data.length > 0) {
+                // Chỉ chốt những ô có chữ, có nội dung hoặc có tick nghỉ gấp
+                const idsToBill = data.filter(l => l.session_date || l.content || l.is_urgent).map(l => l.id);
+                if (idsToBill.length > 0) {
+                    await dbClient.from('student_lessons').update({ is_billed: true, payment_status: 'PAID' }).in('id', idsToBill);
+                }
+            }
             
+            // 2. Tạo lịch trống cho tháng sau (Đã trừ đi số ô trống hiện tại)
             const autoNextMonth = parseInt(document.getElementById('auto-next-month').innerText);
-            const rowsToCreate = autoNextMonth - currentSurplus;
+            const rowsToCreate = autoNextMonth - currentBlankPaidSlots;
             
             if(rowsToCreate > 0) {
                 const payloads = []; 
-                for(let i=0; i<rowsToCreate; i++) { payloads.push({ username: currentSelectedUser, session_date: '', content: '', payment_status: 'PAID' }); }
+                for(let i=0; i<rowsToCreate; i++) { 
+                    payloads.push({ username: currentSelectedUser, session_date: '', content: '', payment_status: 'PAID', is_billed: false, is_urgent: false }); 
+                }
                 await dbClient.from('student_lessons').insert(payloads);
             }
             alert("✅ Đã ghi nhận thu tiền thành công!"); loadLessons(currentSelectedUser);
@@ -291,13 +333,13 @@
         async function addPrepaidLessons() { 
             const num = parseInt(document.getElementById('prepaid-sessions').value); 
             if(!num || num <= 0) return alert("Nhập số buổi hợp lệ!"); 
-            const payloads = []; for(let i=0; i<num; i++) { payloads.push({ username: currentSelectedUser, session_date: '', content: '', payment_status: 'PAID' }); }
+            const payloads = []; for(let i=0; i<num; i++) { payloads.push({ username: currentSelectedUser, session_date: '', content: '', payment_status: 'PAID', is_billed: false, is_urgent: false }); }
             await dbClient.from('student_lessons').insert(payloads); 
             document.getElementById('prepaid-sessions').value = ''; loadLessons(currentSelectedUser); 
         }
 
         async function updateLesson(id, field, value) { const payload = {}; payload[field] = value; await dbClient.from('student_lessons').update(payload).eq('id', id); loadLessons(currentSelectedUser); } 
-        async function addLesson() { await dbClient.from('student_lessons').insert([{ username: currentSelectedUser, session_date: '', content: '', payment_status: 'UNPAID' }]); loadLessons(currentSelectedUser); }
+        async function addLesson() { await dbClient.from('student_lessons').insert([{ username: currentSelectedUser, session_date: '', content: '', payment_status: 'UNPAID', is_billed: false, is_urgent: false }]); loadLessons(currentSelectedUser); }
         async function togglePayment(id, status) { await dbClient.from('student_lessons').update({ payment_status: status === 'PAID' ? 'UNPAID' : 'PAID' }).eq('id', id); loadLessons(currentSelectedUser); }
         async function delLesson(id) { await dbClient.from('student_lessons').delete().eq('id', id); loadLessons(currentSelectedUser); }
 
