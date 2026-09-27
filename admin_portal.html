@@ -33,9 +33,17 @@
     </div>
 
     <div id="main-admin-content" class="w-full max-w-7xl relative opacity-0 pointer-events-none transition-opacity duration-500">
-        <div class="mb-6 torn-paper p-6 bg-white flex justify-between items-center">
+        <div class="mb-6 torn-paper p-6 bg-white flex flex-col md:flex-row justify-between items-center gap-4">
             <h2 class="text-3xl font-bold text-green-700">Tutor Dashboard 👩‍🏫</h2>
-            <button onclick="refreshAll()" class="btn-90s bg-green-200 px-4 py-2 text-sm">🔄 Làm mới dữ liệu</button>
+            
+            <!-- THẺ DOANH THU TỔNG (Cập nhật nhãn động) -->
+            <div class="bg-yellow-100 border border-yellow-400 p-3 rounded-lg shadow-sm flex items-center gap-4">
+                <div>
+                    <p class="text-xs font-bold text-gray-600 uppercase" id="global-revenue-label">💰 Dự kiến Thu Tháng Tới</p>
+                    <p class="text-2xl font-bold text-green-700"><span id="global-revenue-amount">0</span> đ</p>
+                </div>
+                <button onclick="refreshAll()" class="btn-90s bg-green-200 px-4 py-2 text-sm whitespace-nowrap">🔄 Cập nhật</button>
+            </div>
         </div>
 
         <div class="flex flex-wrap gap-2 mb-4">
@@ -60,7 +68,6 @@
                             <div class="bg-gray-100 border p-4 rounded mb-2 flex justify-between gap-2 items-center"><div><input type="text" id="detail-name" class="text-lg font-bold text-purple-700 bg-white border px-2 py-1 rounded w-40"><p class="text-sm mt-1">User: <span id="detail-user"></span></p></div><div class="flex items-center gap-2"><div class="relative flex items-center"><input type="password" id="detail-pass" class="w-28 border px-2 py-1 rounded pr-7"><button onclick="togglePass('detail-pass')" class="absolute right-1 text-sm">👁️</button></div><button onclick="updateStudent()" class="bg-yellow-300 px-3 py-1 font-bold rounded border border-black">Lưu</button></div></div>
                             <div class="bg-blue-50 border border-blue-200 p-3 rounded mb-4 flex items-center gap-3"><label class="font-bold text-blue-700 whitespace-nowrap">🎥 Link Lớp (Meet/Zoom):</label><input type="text" id="detail-meet" placeholder="Dán link vào đây..." class="w-full p-2 border rounded outline-none text-sm"><button onclick="updateStudentMeet()" class="bg-blue-300 px-4 py-2 font-bold rounded border border-black text-sm whitespace-nowrap">Ghim Link</button></div>
                             
-                            <!-- BẢNG TÍNH HỌC PHÍ TỰ ĐỘNG THÔNG MINH -->
                             <div class="bg-orange-50 border-2 border-orange-300 rounded p-4 mb-4 shadow-sm">
                                 <h3 class="font-bold text-orange-800 text-lg mb-3 border-b border-orange-200 pb-2">💰 KẾ TOÁN TỰ ĐỘNG</h3>
                                 
@@ -110,7 +117,6 @@
                                 </div>
                             </div>
                             
-                            <!-- BẢNG LỊCH HỌC -->
                             <div class="flex justify-between items-center mb-2 bg-gray-50 p-2 border rounded border-gray-300">
                                 <div class="flex items-center gap-2">
                                     <input type="number" id="prepaid-sessions" placeholder="Số buổi..." class="p-1 border border-gray-400 rounded w-20 text-sm font-bold text-center outline-none focus:border-green-500">
@@ -159,10 +165,12 @@
         
         let currentDebt = 0; let currentSurplus = 0; let currentBlankPaidSlots = 0;
         let selectedScheduleDays = []; 
+        let globalNextMonthLabel = "";
 
         window.addEventListener('DOMContentLoaded', () => { 
             if (window.supabase) { dbClient = window.supabase.createClient(supabaseUrl, supabaseKey); }
             document.getElementById('admin-pass-input').addEventListener('keypress', function (e) { if (e.key === 'Enter') { checkAdminLogin(); } });
+            
             updateMonthLabels();
         });
 
@@ -171,11 +179,14 @@
             const currentMonth = today.getMonth() + 1;
             let nextMonth = currentMonth + 1;
             if (nextMonth > 12) nextMonth = 1;
+            
+            globalNextMonthLabel = `Tháng ${nextMonth}`;
 
             document.getElementById('label-debt').innerText = `Tháng ${currentMonth} Lố (Nợ)`;
             document.getElementById('label-surplus').innerText = `Tháng ${currentMonth} Dư`;
             document.getElementById('label-next-month').innerText = `Lịch cố định tháng ${nextMonth}`;
             document.getElementById('label-calc-total').innerText = `THÁNG ${nextMonth} THU = (Lịch cố định + Lố - Dư) x Rate`;
+            document.getElementById('global-revenue-label').innerText = `💰 Dự kiến Thu Tháng ${nextMonth}`;
         }
 
         function checkAdminLogin() { const input = document.getElementById('admin-pass-input').value; if (input === ADMIN_PASS) { document.getElementById('admin-login-overlay').classList.add('hidden'); const mainContent = document.getElementById('main-admin-content'); mainContent.classList.remove('opacity-0', 'pointer-events-none'); refreshAll(); } else { document.getElementById('admin-error-msg').classList.remove('hidden'); document.getElementById('admin-pass-input').value = ''; } }
@@ -186,7 +197,21 @@
 
         document.getElementById('paste-area').addEventListener('paste', function(e) { e.preventDefault(); const items = (e.clipboardData || e.originalEvent.clipboardData).items; for (let index in items) { if (items[index].kind === 'file') { const blob = items[index].getAsFile(); const reader = new FileReader(); reader.onload = function(evt) { document.getElementById('ass-img-base64').value = evt.target.result; document.getElementById('img-preview').src = evt.target.result; document.getElementById('img-preview').classList.remove('hidden'); }; reader.readAsDataURL(blob); } } });
 
-        async function loadStudents() { const { data } = await dbClient.from('students').select('*').order('id', { ascending: false }); if (data) { globalAllStudents = data; const list = document.getElementById('student-list'); const selAss = document.getElementById('ass-target'); const selHand = document.getElementById('hand-target'); const selTodo = document.getElementById('todo-target'); const selErr = document.getElementById('err-target'); list.innerHTML = ''; selAss.innerHTML = '<option value="ALL">Giao cho TẤT CẢ</option>'; selHand.innerHTML = '<option value="ALL">Cho TẤT CẢ</option>'; selTodo.innerHTML = '<option value="ALL">Giao cho TẤT CẢ</option>'; selErr.innerHTML = '<option value="">-- Chọn HS --</option>'; data.forEach(s => { list.innerHTML += `<div class="flex gap-2 mb-1"><button onclick="viewStudent('${s.username}')" class="flex-grow text-left p-2 bg-gray-50 border hover:bg-pink-100">👤 ${s.full_name||s.username}</button><button onclick="delStudent('${s.username}')" class="p-2 bg-red-100 text-red-600 border">X</button></div>`; const opt = `<option value="${s.username}">${s.full_name||s.username}</option>`; selAss.innerHTML += opt; selHand.innerHTML += opt; selTodo.innerHTML += opt; selErr.innerHTML += opt; }); } }
+        async function loadStudents() { 
+            const { data } = await dbClient.from('students').select('*').order('id', { ascending: false }); 
+            if (data) { 
+                globalAllStudents = data; 
+                const list = document.getElementById('student-list'); const selAss = document.getElementById('ass-target'); const selHand = document.getElementById('hand-target'); const selTodo = document.getElementById('todo-target'); const selErr = document.getElementById('err-target'); 
+                list.innerHTML = ''; selAss.innerHTML = '<option value="ALL">Giao cho TẤT CẢ</option>'; selHand.innerHTML = '<option value="ALL">Cho TẤT CẢ</option>'; selTodo.innerHTML = '<option value="ALL">Giao cho TẤT CẢ</option>'; selErr.innerHTML = '<option value="">-- Chọn HS --</option>'; 
+                data.forEach(s => { 
+                    list.innerHTML += `<div class="flex gap-2 mb-1"><button onclick="viewStudent('${s.username}')" class="flex-grow text-left p-2 bg-gray-50 border hover:bg-pink-100">👤 ${s.full_name||s.username}</button><button onclick="delStudent('${s.username}')" class="p-2 bg-red-100 text-red-600 border">X</button></div>`; 
+                    const opt = `<option value="${s.username}">${s.full_name||s.username}</option>`; 
+                    selAss.innerHTML += opt; selHand.innerHTML += opt; selTodo.innerHTML += opt; selErr.innerHTML += opt; 
+                }); 
+                calculateGlobalRevenue(); // TÍNH TỔNG SAU KHI LOAD XONG HỌC SINH
+            } 
+        }
+
         async function addStudent() { const u = document.getElementById('stu-user').value; const p = document.getElementById('stu-pass').value; const n = document.getElementById('stu-name').value; if(!u || !p) return alert("Thiếu TK!"); await dbClient.from('students').insert([{ username: u, password: p, full_name: n }]); loadStudents(); }
         
         function viewStudent(u) { 
@@ -206,6 +231,45 @@
             });
             
             loadLessons(u); 
+        }
+
+        // HÀM TÍNH TỔNG DOANH THU CỦA TẤT CẢ HỌC SINH
+        async function calculateGlobalRevenue() {
+            if(globalAllStudents.length === 0) return;
+            const { data: allLessons } = await dbClient.from('student_lessons').select('*').eq('is_billed', false);
+            
+            let totalRevenue = 0;
+
+            for (const student of globalAllStudents) {
+                const rate = student.tuition_rate || 0;
+                if(rate === 0) continue;
+
+                // 1. Tính lịch cố định tháng sau
+                const scheduleDays = student.schedule_notes ? student.schedule_notes.split(',') : [];
+                const nextMonthSessions = getSessionsNextMonth(scheduleDays);
+
+                // 2. Tính Dư / Nợ của bạn này
+                const myLessons = (allLessons||[]).filter(l => l.username === student.username);
+                let myDebt = 0; let mySurplus = 0;
+                
+                myLessons.forEach(l => {
+                    const isBlank = !l.session_date && !l.content;
+                    if (l.payment_status === 'UNPAID') {
+                        if (l.is_urgent) myDebt += 0.3;
+                        else if (!isBlank) myDebt += 1.0;
+                    } else if (l.payment_status === 'PAID') {
+                        if (l.is_urgent) mySurplus += 0.7;
+                        else if (isBlank) mySurplus += 1.0;
+                    }
+                });
+
+                // 3. Tính tiền bạn này và cộng vào tổng
+                let myTotalSessions = nextMonthSessions + myDebt - mySurplus;
+                if(myTotalSessions < 0) myTotalSessions = 0;
+                totalRevenue += (myTotalSessions * rate);
+            }
+
+            document.getElementById('global-revenue-amount').innerText = new Intl.NumberFormat('vi-VN').format(totalRevenue);
         }
 
         function getSessionsNextMonth(daysOfWeekArray) {
@@ -253,6 +317,7 @@
                 globalAllStudents[sIndex].tuition_rate = document.getElementById('tuition-rate').value;
                 globalAllStudents[sIndex].schedule_notes = scheduleString;
             }
+            calculateGlobalRevenue(); 
         }
 
         async function loadLessons(user) { 
@@ -263,13 +328,12 @@
             const rowsHtml = (data||[]).map((l, index) => {
                 const isBlank = !l.session_date && !l.content;
                 
-                // Thuật toán đếm số buổi (Chỉ tính những dòng CHƯA CHỐT SỔ)
                 if (!l.is_billed) {
                     if (l.payment_status === 'UNPAID') {
                         if (l.is_urgent) debt += 0.3;
                         else if (!isBlank) debt += 1.0;
                     } else if (l.payment_status === 'PAID') {
-                        if (l.is_urgent) surplus += 0.7; // Đóng 100% nhưng chỉ xài 30% (nghỉ gấp) -> Dư 70%
+                        if (l.is_urgent) surplus += 0.7; 
                         else if (isBlank) { surplus += 1.0; blankPaidSlots += 1; }
                     }
                 }
@@ -300,23 +364,17 @@
 
         async function processMonthlyTuition() {
             const nextMonthSessions = Number(document.getElementById('calc-total-sessions').innerText);
-            const today = new Date();
-            let nextMonth = today.getMonth() + 2;
-            if (nextMonth > 12) nextMonth = 1;
 
-            if(!confirm(`Xác nhận học sinh ĐÃ ĐÓNG ${document.getElementById('calc-total-money').innerText} VNĐ cho ${nextMonthSessions} buổi của THÁNG ${nextMonth}?\nHệ thống sẽ lưu trữ lịch cũ và tạo số lịch mới.`)) return;
+            if(!confirm(`Xác nhận học sinh ĐÃ ĐÓNG ${document.getElementById('calc-total-money').innerText} VNĐ cho ${nextMonthSessions} buổi của ${globalNextMonthLabel}?\nHệ thống sẽ lưu trữ lịch cũ và tạo số lịch mới.`)) return;
             
-            // 1. Chốt sổ các buổi đã học/nghỉ gấp của tháng này
             const { data } = await dbClient.from('student_lessons').select('*').eq('username', currentSelectedUser).eq('is_billed', false);
             if(data && data.length > 0) {
-                // Chỉ chốt những ô có chữ, có nội dung hoặc có tick nghỉ gấp
                 const idsToBill = data.filter(l => l.session_date || l.content || l.is_urgent).map(l => l.id);
                 if (idsToBill.length > 0) {
                     await dbClient.from('student_lessons').update({ is_billed: true, payment_status: 'PAID' }).in('id', idsToBill);
                 }
             }
             
-            // 2. Tạo lịch trống cho tháng sau (Đã trừ đi số ô trống hiện tại)
             const autoNextMonth = parseInt(document.getElementById('auto-next-month').innerText);
             const rowsToCreate = autoNextMonth - currentBlankPaidSlots;
             
@@ -327,7 +385,9 @@
                 }
                 await dbClient.from('student_lessons').insert(payloads);
             }
-            alert("✅ Đã ghi nhận thu tiền thành công!"); loadLessons(currentSelectedUser);
+            alert("✅ Đã ghi nhận thu tiền thành công!"); 
+            loadLessons(currentSelectedUser);
+            calculateGlobalRevenue();
         }
 
         async function addPrepaidLessons() { 
@@ -335,17 +395,17 @@
             if(!num || num <= 0) return alert("Nhập số buổi hợp lệ!"); 
             const payloads = []; for(let i=0; i<num; i++) { payloads.push({ username: currentSelectedUser, session_date: '', content: '', payment_status: 'PAID', is_billed: false, is_urgent: false }); }
             await dbClient.from('student_lessons').insert(payloads); 
-            document.getElementById('prepaid-sessions').value = ''; loadLessons(currentSelectedUser); 
+            document.getElementById('prepaid-sessions').value = ''; loadLessons(currentSelectedUser); calculateGlobalRevenue();
         }
 
-        async function updateLesson(id, field, value) { const payload = {}; payload[field] = value; await dbClient.from('student_lessons').update(payload).eq('id', id); loadLessons(currentSelectedUser); } 
-        async function addLesson() { await dbClient.from('student_lessons').insert([{ username: currentSelectedUser, session_date: '', content: '', payment_status: 'UNPAID', is_billed: false, is_urgent: false }]); loadLessons(currentSelectedUser); }
-        async function togglePayment(id, status) { await dbClient.from('student_lessons').update({ payment_status: status === 'PAID' ? 'UNPAID' : 'PAID' }).eq('id', id); loadLessons(currentSelectedUser); }
-        async function delLesson(id) { await dbClient.from('student_lessons').delete().eq('id', id); loadLessons(currentSelectedUser); }
+        async function updateLesson(id, field, value) { const payload = {}; payload[field] = value; await dbClient.from('student_lessons').update(payload).eq('id', id); loadLessons(currentSelectedUser); calculateGlobalRevenue(); } 
+        async function addLesson() { await dbClient.from('student_lessons').insert([{ username: currentSelectedUser, session_date: '', content: '', payment_status: 'UNPAID', is_billed: false, is_urgent: false }]); loadLessons(currentSelectedUser); calculateGlobalRevenue(); }
+        async function togglePayment(id, status) { await dbClient.from('student_lessons').update({ payment_status: status === 'PAID' ? 'UNPAID' : 'PAID' }).eq('id', id); loadLessons(currentSelectedUser); calculateGlobalRevenue(); }
+        async function delLesson(id) { await dbClient.from('student_lessons').delete().eq('id', id); loadLessons(currentSelectedUser); calculateGlobalRevenue(); }
 
         async function updateStudent() { await dbClient.from('students').update({ full_name: document.getElementById('detail-name').value, password: document.getElementById('detail-pass').value }).eq('username', currentSelectedUser); alert("✅ Đã lưu!"); loadStudents(); }
         async function updateStudentMeet() { await dbClient.from('students').update({ meet_link: document.getElementById('detail-meet').value.trim() }).eq('username', currentSelectedUser); alert("✅ Đã ghim Link!"); loadStudents(); }
-        async function delStudent(user) { if(confirm("XÓA học sinh?")) { await dbClient.from('students').delete().eq('username', user); loadStudents(); document.getElementById('student-detail').classList.add('hidden'); } }
+        async function delStudent(user) { if(confirm("XÓA học sinh?")) { await dbClient.from('students').delete().eq('username', user); loadStudents(); document.getElementById('student-detail').classList.add('hidden'); calculateGlobalRevenue(); } }
 
         let allAss = [];
         async function loadAssignments() { const { data } = await dbClient.from('assignments').select('*').order('id', { ascending: false }); allAss = data || []; document.getElementById('ass-list-container').innerHTML = allAss.map(a => `<div class="p-2 border rounded bg-gray-50 flex justify-between items-center"><div><span class="font-bold">[${a.ass_type||'WRITING'}] ${a.title}</span> <span class="text-xs text-gray-500">(${a.target_student})</span> <br><small class="text-gray-500">📅 ${a.assigned_date||'--'} | ⏰ ${a.deadline_date||'--'}</small></div> <div><button onclick="viewAss(${a.id})" class="bg-blue-100 text-blue-700 px-2 py-1 rounded border border-blue-300 mr-1 font-bold text-xs hover:bg-blue-200">👁️ Xem Đề</button><button onclick="editAss(${a.id})" class="bg-yellow-100 px-2 py-1 rounded border border-yellow-300 mr-1 text-xs hover:bg-yellow-200">Sửa</button><button onclick="delAss(${a.id})" class="bg-red-100 px-2 py-1 rounded border border-red-300 text-xs hover:bg-red-200">Xóa</button></div></div>`).join(''); }
