@@ -36,10 +36,9 @@
         <div class="mb-6 torn-paper p-6 bg-white flex flex-col md:flex-row justify-between items-center gap-4">
             <h2 class="text-3xl font-bold text-green-700">Tutor Dashboard 👩‍🏫</h2>
             
-            <!-- THẺ DOANH THU TỔNG (Cập nhật nhãn động) -->
             <div class="bg-yellow-100 border border-yellow-400 p-3 rounded-lg shadow-sm flex items-center gap-4">
                 <div>
-                    <p class="text-xs font-bold text-gray-600 uppercase" id="global-revenue-label">💰 Dự kiến Thu Tháng Tới</p>
+                    <p class="text-xs font-bold text-gray-600 uppercase" id="global-revenue-label">💰 Dự kiến Thu</p>
                     <p class="text-2xl font-bold text-green-700"><span id="global-revenue-amount">0</span> đ</p>
                 </div>
                 <button onclick="refreshAll()" class="btn-90s bg-green-200 px-4 py-2 text-sm whitespace-nowrap">🔄 Cập nhật</button>
@@ -69,7 +68,13 @@
                             <div class="bg-blue-50 border border-blue-200 p-3 rounded mb-4 flex items-center gap-3"><label class="font-bold text-blue-700 whitespace-nowrap">🎥 Link Lớp (Meet/Zoom):</label><input type="text" id="detail-meet" placeholder="Dán link vào đây..." class="w-full p-2 border rounded outline-none text-sm"><button onclick="updateStudentMeet()" class="bg-blue-300 px-4 py-2 font-bold rounded border border-black text-sm whitespace-nowrap">Ghim Link</button></div>
                             
                             <div class="bg-orange-50 border-2 border-orange-300 rounded p-4 mb-4 shadow-sm">
-                                <h3 class="font-bold text-orange-800 text-lg mb-3 border-b border-orange-200 pb-2">💰 KẾ TOÁN TỰ ĐỘNG</h3>
+                                <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-orange-200 pb-2 mb-3 gap-2">
+                                    <h3 class="font-bold text-orange-800 text-lg">💰 KẾ TOÁN TỰ ĐỘNG</h3>
+                                    <div class="flex items-center gap-2 bg-white px-3 py-1 border border-orange-300 rounded shadow-sm">
+                                        <label class="text-sm font-bold text-gray-700">Kỳ thu tiền:</label>
+                                        <input type="month" id="billing-month" class="p-1 border-none font-bold text-blue-700 outline-none cursor-pointer bg-transparent" onchange="updateMonthLabels(); recalcTuition(); calculateGlobalRevenue();">
+                                    </div>
+                                </div>
                                 
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                     <div class="md:col-span-1 border-r border-orange-200 pr-4">
@@ -92,25 +97,25 @@
 
                                 <div class="bg-white border rounded p-3 text-sm grid grid-cols-3 gap-2 text-center mb-3">
                                     <div class="bg-red-50 border border-red-200 p-2 rounded">
-                                        <span class="block text-xs font-bold text-red-600" id="label-debt">Tháng này Lố (Nợ)</span>
+                                        <span class="block text-xs font-bold text-red-600" id="label-debt">Tháng cũ Lố (Nợ)</span>
                                         <span class="text-xl font-bold" id="stat-debt">0</span> <span class="text-xs">buổi</span>
                                     </div>
                                     <div class="bg-green-50 border border-green-200 p-2 rounded">
-                                        <span class="block text-xs font-bold text-green-600" id="label-surplus">Tháng này Dư</span>
+                                        <span class="block text-xs font-bold text-green-600" id="label-surplus">Tháng cũ Dư</span>
                                         <span class="text-xl font-bold" id="stat-surplus">0</span> <span class="text-xs">buổi</span>
                                     </div>
                                     <div class="bg-blue-50 border border-blue-200 p-2 rounded relative group cursor-help">
-                                        <span class="block text-xs font-bold text-blue-600 border-b border-blue-200 pb-1 mb-1" id="label-next-month">Lịch cố định tháng tới</span>
+                                        <span class="block text-xs font-bold text-blue-600 border-b border-blue-200 pb-1 mb-1" id="label-next-month">Lịch cố định tháng mới</span>
                                         <span class="text-xl font-bold text-blue-800" id="auto-next-month">0</span> <span class="text-xs">buổi</span>
                                         <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block w-48 bg-gray-800 text-white text-xs p-2 rounded z-10 shadow-lg text-left">
-                                            Hệ thống tự đếm lịch tháng tới.
+                                            Hệ thống đếm lịch theo kỳ thu tiền đã chọn.
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="flex justify-between items-center bg-yellow-100 p-3 rounded border border-yellow-400">
                                     <div>
-                                        <p class="text-xs font-bold text-gray-600 uppercase" id="label-calc-total">THÁNG TỚI THU = (Lịch cố định + Lố - Dư) x Rate</p>
+                                        <p class="text-xs font-bold text-gray-600 uppercase" id="label-calc-total">THÁNG MỚI THU = (Lịch cố định + Lố - Dư) x Rate</p>
                                         <p class="text-2xl font-bold text-red-600"><span id="calc-total-sessions">0</span> buổi = <span id="calc-total-money">0</span> đ</p>
                                     </div>
                                     <button onclick="processMonthlyTuition()" class="btn-90s bg-green-400 px-4 py-2 font-bold whitespace-nowrap">Chốt & Tạo Lịch Mới</button>
@@ -146,7 +151,7 @@
                 </div>
             </div>
 
-            <!-- CÁC TAB CŨ GIỮ NGUYÊN -->
+            <!-- CÁC TAB KHÁC GIỮ NGUYÊN BÊN DƯỚI NÀY -->
             <div id="tab-assign" class="tab-content hidden"><div class="grid grid-cols-2 gap-4 bg-blue-50 p-4 border rounded"><div class="space-y-3 flex flex-col"><input type="hidden" id="edit-ass-id"><select id="ass-target" class="w-full p-2 border rounded font-bold"><option value="ALL">Giao cho TẤT CẢ</option></select><div class="flex gap-2"><div class="w-1/2"><label class="font-bold text-xs text-gray-600 block mb-1">📅 Ngày giao:</label><input type="date" id="ass-assigned-date" class="w-full p-2 border rounded text-sm"></div><div class="w-1/2"><label class="font-bold text-xs text-red-600 block mb-1">⏰ Deadline:</label><input type="date" id="ass-deadline-date" class="w-full p-2 border rounded text-sm border-red-300"></div></div><select id="ass-type" class="w-full p-2 border rounded font-bold text-blue-700"><option value="READING">📖 Dạng Reading (Chia trái/phải)</option><option value="LISTENING">🎧 Dạng Listening (Chia trên/dưới)</option><option value="WRITING" selected>✍️ Dạng Writing (Bình thường)</option></select><input type="text" id="ass-title" placeholder="Tiêu đề bài tập" class="w-full p-2 border rounded"><input type="number" id="ass-timer" value="40" placeholder="Thời gian (phút)" class="w-full p-2 border rounded"><input type="text" id="ass-audio" placeholder="Link Audio (Nếu có)" class="w-full p-2 border rounded"><div class="mt-2"><label class="font-bold text-sm text-green-700">🖼️ Đề bài dạng ẢNH (Hiện bên TRÁI):</label><div id="paste-area" tabindex="0" class="w-full h-12 border-2 border-dashed border-green-400 bg-white flex items-center justify-center text-gray-400 text-sm font-bold mt-1">Dán ảnh vào đây (Ctrl+V) 📋</div><img id="img-preview" class="hidden mt-2 max-h-24 mx-auto border rounded"><input type="hidden" id="ass-img-base64"></div></div><div class="space-y-3 flex flex-col"><div class="flex-grow flex flex-col"><label class="font-bold text-sm text-gray-700">📖 Đề bài dạng TEXT (Hiện bên TRÁI):</label><textarea id="ass-content" rows="6" class="w-full p-2 border rounded flex-grow" placeholder="Nội dung bài đọc/passage..."></textarea></div><div class="flex-grow flex flex-col mt-2"><label class="font-bold text-sm text-pink-600">❓ CÂU HỎI (Hiện bên PHẢI, trên ô làm bài):</label><textarea id="ass-question" rows="5" class="w-full p-2 border-2 border-pink-300 rounded flex-grow" placeholder="Gõ câu hỏi vào đây..."></textarea></div></div></div><div class="flex gap-2 mt-4"><button onclick="cancelEditAss()" id="btn-cancel-ass" class="hidden btn-90s bg-gray-300 px-4 py-2">Hủy</button><button onclick="publishAss()" id="btn-publish-ass" class="btn-90s bg-blue-300 w-full py-2">🚀 Đăng Bài</button></div><div id="ass-list-container" class="space-y-2 max-h-60 overflow-y-auto mt-4 text-sm"></div></div>
             <div id="tab-todo" class="tab-content hidden"><div class="bg-orange-50 p-4 border rounded flex flex-wrap gap-4 items-end mb-4"><select id="todo-target" class="p-2 border rounded font-bold w-full md:w-auto"><option value="ALL">Giao cho TẤT CẢ</option></select><input type="text" id="todo-title" placeholder="Tên nhiệm vụ" class="p-2 border rounded flex-grow min-w-[200px]"><input type="text" id="todo-url" placeholder="Paste link vào đây (nếu có)" class="p-2 border rounded flex-grow min-w-[200px]"><button onclick="addTodo()" class="btn-90s bg-orange-300 px-6 py-2 w-full md:w-auto">Giao Việc</button></div><div id="todo-list-container" class="space-y-2 max-h-[400px] overflow-y-auto text-sm"></div></div>
             <div id="tab-handout" class="tab-content hidden"><div class="bg-purple-50 p-4 border rounded flex gap-4 items-end mb-4"><select id="hand-target" class="p-2 border rounded"><option value="ALL">Cho TẤT CẢ</option></select><input type="text" id="hand-title" placeholder="Tên tài liệu" class="p-2 border rounded flex-grow"><input type="text" id="hand-url" placeholder="Link File PDF/Doc" class="p-2 border rounded flex-grow"><button onclick="publishHandout()" id="btn-publish-hand" class="btn-90s bg-purple-300 px-4 py-2">Đăng File</button></div><div id="hand-list-container" class="space-y-2 max-h-60 overflow-y-auto text-sm"></div></div>
@@ -155,7 +160,6 @@
         </div>
     </div>
 
-    <!-- MODAL XEM TRƯỚC ĐỀ BÀI (ASSIGNMENT) -->
     <div id="view-ass-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center p-4"><div class="bg-white rounded-lg w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden shadow-2xl"><div class="p-4 border-b flex justify-between items-center bg-blue-50"><h3 id="view-ass-modal-title" class="text-xl font-bold text-blue-800">Tiêu đề bài tập</h3><button onclick="closeAssModal()" class="text-gray-500 font-bold hover:text-red-500 text-2xl px-2">✖</button></div><div class="p-4 overflow-y-auto flex-grow flex flex-col md:flex-row gap-4 bg-gray-100"><div class="w-full md:w-1/2 border rounded p-4 bg-white shadow-sm flex flex-col gap-3"><h4 class="font-bold text-gray-700 border-b pb-2 text-sm uppercase">📖 Nội dung Đề bài (Bên Trái)</h4><div id="view-ass-audio" class="hidden bg-blue-100 p-2 rounded"><audio controls class="w-full h-8"><source src=""></audio></div><img id="view-ass-img" src="" class="max-w-full h-auto hidden border rounded"><div id="view-ass-content" class="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed"></div></div><div class="w-full md:w-1/2 border rounded p-4 bg-pink-50 shadow-sm flex flex-col gap-3"><h4 class="font-bold text-pink-700 border-b border-pink-200 pb-2 text-sm uppercase">❓ Câu hỏi (Bên Phải)</h4><div id="view-ass-question" class="whitespace-pre-wrap text-sm font-medium text-gray-800"></div></div></div></div></div>
 
     <script>
@@ -171,22 +175,39 @@
             if (window.supabase) { dbClient = window.supabase.createClient(supabaseUrl, supabaseKey); }
             document.getElementById('admin-pass-input').addEventListener('keypress', function (e) { if (e.key === 'Enter') { checkAdminLogin(); } });
             
+            // XỬ LÝ KHỞI TẠO THÁNG THU TIỀN THÔNG MINH
+            const today = new Date();
+            let billYear = today.getFullYear();
+            let billMonth = today.getMonth() + 1;
+            
+            // Nếu là cuối tháng (>= ngày 20), máy tự hiểu là bạn đang thu tiền cho tháng SAU
+            // Nếu là đầu tháng (< ngày 20), máy tự hiểu bạn đang thu cho THÁNG NÀY
+            if (today.getDate() >= 20) { 
+                billMonth++;
+                if (billMonth > 12) { billMonth = 1; billYear++; }
+            }
+            
+            const mStr = billMonth.toString().padStart(2, '0');
+            document.getElementById('billing-month').value = `${billYear}-${mStr}`;
             updateMonthLabels();
         });
 
+        // Hàm cập nhật tất cả các chữ "Tháng X" trên màn hình
         function updateMonthLabels() {
-            const today = new Date();
-            const currentMonth = today.getMonth() + 1;
-            let nextMonth = currentMonth + 1;
-            if (nextMonth > 12) nextMonth = 1;
+            const val = document.getElementById('billing-month').value;
+            if(!val) return;
+            const [y, m] = val.split('-');
+            const targetMonth = parseInt(m);
+            let prevMonth = targetMonth - 1;
+            if (prevMonth === 0) prevMonth = 12;
             
-            globalNextMonthLabel = `Tháng ${nextMonth}`;
+            globalNextMonthLabel = `Tháng ${targetMonth}`;
 
-            document.getElementById('label-debt').innerText = `Tháng ${currentMonth} Lố (Nợ)`;
-            document.getElementById('label-surplus').innerText = `Tháng ${currentMonth} Dư`;
-            document.getElementById('label-next-month').innerText = `Lịch cố định tháng ${nextMonth}`;
-            document.getElementById('label-calc-total').innerText = `THÁNG ${nextMonth} THU = (Lịch cố định + Lố - Dư) x Rate`;
-            document.getElementById('global-revenue-label').innerText = `💰 Dự kiến Thu Tháng ${nextMonth}`;
+            document.getElementById('label-debt').innerText = `Tháng ${prevMonth} Lố (Nợ)`;
+            document.getElementById('label-surplus').innerText = `Tháng ${prevMonth} Dư`;
+            document.getElementById('label-next-month').innerText = `Lịch cố định tháng ${targetMonth}`;
+            document.getElementById('label-calc-total').innerText = `THÁNG ${targetMonth} THU = (Lịch cố định + Lố - Dư) x Rate`;
+            document.getElementById('global-revenue-label').innerText = `💰 Dự kiến Thu Tháng ${targetMonth}`;
         }
 
         function checkAdminLogin() { const input = document.getElementById('admin-pass-input').value; if (input === ADMIN_PASS) { document.getElementById('admin-login-overlay').classList.add('hidden'); const mainContent = document.getElementById('main-admin-content'); mainContent.classList.remove('opacity-0', 'pointer-events-none'); refreshAll(); } else { document.getElementById('admin-error-msg').classList.remove('hidden'); document.getElementById('admin-pass-input').value = ''; } }
@@ -208,11 +229,11 @@
                     const opt = `<option value="${s.username}">${s.full_name||s.username}</option>`; 
                     selAss.innerHTML += opt; selHand.innerHTML += opt; selTodo.innerHTML += opt; selErr.innerHTML += opt; 
                 }); 
-                calculateGlobalRevenue(); // TÍNH TỔNG SAU KHI LOAD XONG HỌC SINH
+                calculateGlobalRevenue(); 
             } 
         }
 
-        async function addStudent() { const u = document.getElementById('stu-user').value; const p = document.getElementById('stu-pass').value; const n = document.getElementById('stu-name').value; if(!u || !p) return alert("Thiếu TK!"); await dbClient.from('students').insert([{ username: u, password: p, full_name: n }]); loadStudents(); }
+        async function addStudent() { const u = document.getElementById('stu-user').value; const p = document.getElementById('stu-pass').value; const n = document.getElementById('stu-name').value; if(!u || !p) return alert("Thiếu TK!"); await dbClient.from('students').insert([{ username: u, password: p, full_name: n }]); loadStudents(); calculateGlobalRevenue(); }
         
         function viewStudent(u) { 
             currentSelectedUser = u; const student = globalAllStudents.find(s => s.username === u); 
@@ -233,7 +254,25 @@
             loadLessons(u); 
         }
 
-        // HÀM TÍNH TỔNG DOANH THU CỦA TẤT CẢ HỌC SINH
+        // HÀM ĐẾM SỐ NGÀY HỌC DỰA TRÊN THÁNG CHỌN
+        function getSessionsTargetMonth(daysOfWeekArray) {
+            if (daysOfWeekArray.length === 0) return 0;
+            const dateVal = document.getElementById('billing-month').value; 
+            if (!dateVal) return 0;
+            
+            const [yearStr, monthStr] = dateVal.split('-');
+            const year = parseInt(yearStr);
+            const month = parseInt(monthStr) - 1; // getMonth dùng 0-11
+            
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            let count = 0;
+            for (let d = 1; d <= daysInMonth; d++) {
+                const date = new Date(year, month, d);
+                if (daysOfWeekArray.includes(date.getDay().toString())) { count++; }
+            }
+            return count;
+        }
+
         async function calculateGlobalRevenue() {
             if(globalAllStudents.length === 0) return;
             const { data: allLessons } = await dbClient.from('student_lessons').select('*').eq('is_billed', false);
@@ -244,11 +283,9 @@
                 const rate = student.tuition_rate || 0;
                 if(rate === 0) continue;
 
-                // 1. Tính lịch cố định tháng sau
                 const scheduleDays = student.schedule_notes ? student.schedule_notes.split(',') : [];
-                const nextMonthSessions = getSessionsNextMonth(scheduleDays);
+                const targetMonthSessions = getSessionsTargetMonth(scheduleDays);
 
-                // 2. Tính Dư / Nợ của bạn này
                 const myLessons = (allLessons||[]).filter(l => l.username === student.username);
                 let myDebt = 0; let mySurplus = 0;
                 
@@ -263,8 +300,7 @@
                     }
                 });
 
-                // 3. Tính tiền bạn này và cộng vào tổng
-                let myTotalSessions = nextMonthSessions + myDebt - mySurplus;
+                let myTotalSessions = targetMonthSessions + myDebt - mySurplus;
                 if(myTotalSessions < 0) myTotalSessions = 0;
                 totalRevenue += (myTotalSessions * rate);
             }
@@ -272,31 +308,18 @@
             document.getElementById('global-revenue-amount').innerText = new Intl.NumberFormat('vi-VN').format(totalRevenue);
         }
 
-        function getSessionsNextMonth(daysOfWeekArray) {
-            if (daysOfWeekArray.length === 0) return 0;
-            const today = new Date();
-            let year = today.getFullYear();
-            let month = today.getMonth() + 1;
-            if (month > 11) { month = 0; year++; }
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            let count = 0;
-            for (let d = 1; d <= daysInMonth; d++) {
-                const date = new Date(year, month, d);
-                if (daysOfWeekArray.includes(date.getDay().toString())) { count++; }
-            }
-            return count;
-        }
-
         function recalcTuition() {
+            if (!currentSelectedUser) return;
+
             const checkboxes = document.querySelectorAll('.day-checkbox input:checked');
             selectedScheduleDays = Array.from(checkboxes).map(cb => cb.value);
             saveTuitionConfig(); 
 
-            const nextMonthSessions = getSessionsNextMonth(selectedScheduleDays);
-            document.getElementById('auto-next-month').innerText = nextMonthSessions;
+            const targetMonthSessions = getSessionsTargetMonth(selectedScheduleDays);
+            document.getElementById('auto-next-month').innerText = targetMonthSessions;
 
             const rate = parseInt(document.getElementById('tuition-rate').value) || 0;
-            let totalSessions = nextMonthSessions + currentDebt - currentSurplus;
+            let totalSessions = targetMonthSessions + currentDebt - currentSurplus;
             if(totalSessions < 0) totalSessions = 0; 
             
             const totalMoney = totalSessions * rate;
@@ -363,9 +386,9 @@
         }
 
         async function processMonthlyTuition() {
-            const nextMonthSessions = Number(document.getElementById('calc-total-sessions').innerText);
+            const targetMonthSessions = Number(document.getElementById('calc-total-sessions').innerText);
 
-            if(!confirm(`Xác nhận học sinh ĐÃ ĐÓNG ${document.getElementById('calc-total-money').innerText} VNĐ cho ${nextMonthSessions} buổi của ${globalNextMonthLabel}?\nHệ thống sẽ lưu trữ lịch cũ và tạo số lịch mới.`)) return;
+            if(!confirm(`Xác nhận học sinh ĐÃ ĐÓNG ${document.getElementById('calc-total-money').innerText} VNĐ cho ${targetMonthSessions} buổi của ${globalNextMonthLabel}?\nHệ thống sẽ lưu trữ lịch cũ và tạo số lịch mới.`)) return;
             
             const { data } = await dbClient.from('student_lessons').select('*').eq('username', currentSelectedUser).eq('is_billed', false);
             if(data && data.length > 0) {
@@ -375,8 +398,8 @@
                 }
             }
             
-            const autoNextMonth = parseInt(document.getElementById('auto-next-month').innerText);
-            const rowsToCreate = autoNextMonth - currentBlankPaidSlots;
+            const autoTargetMonth = parseInt(document.getElementById('auto-next-month').innerText);
+            const rowsToCreate = autoTargetMonth - currentBlankPaidSlots;
             
             if(rowsToCreate > 0) {
                 const payloads = []; 
